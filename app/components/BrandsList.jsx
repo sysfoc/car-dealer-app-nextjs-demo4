@@ -1,48 +1,24 @@
-"use client";
+// "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
-import { ArrowLeft, ArrowRight, Car, Truck, Bus, CarFront, CarTaxiFront, TruckIcon as TruckOpen } from 'lucide-react';
+import {
+  Car,
+  Truck,
+  Bus,
+  CarFront,
+  CarTaxiFront,
+  TruckIcon as TruckOpen,
+} from "lucide-react";
 import { MdOutlineArrowOutward } from "react-icons/md";
 
-// Array of Lucide vehicle icons for random assignment
+// Lucide vehicle icons
 const vehicleIcons = [Car, Truck, Bus, CarFront, CarTaxiFront, TruckOpen];
 
 const BrandsList = () => {
   const [brands, setBrands] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentSlide, setCurrentSlide] = useState(0);
   const [brandData, setBrandData] = useState(null);
-  const [screenSize, setScreenSize] = useState('lg');
-
-  // Responsive items per slide configuration
-  const getItemsPerSlide = () => {
-    if (typeof window === 'undefined') return 12;
-    
-    const width = window.innerWidth;
-    if (width < 640) return 4; // mobile: 2x2 grid
-    if (width < 768) return 6; // sm: 2x3 grid
-    if (width < 1024) return 9; // md: 3x3 grid
-    return 12; // lg and above: 2x6 grid
-  };
-
-  const [itemsPerSlide, setItemsPerSlide] = useState(getItemsPerSlide());
-
-  // Handle window resize
-  useEffect(() => {
-    const handleResize = () => {
-      const newItemsPerSlide = getItemsPerSlide();
-      setItemsPerSlide(newItemsPerSlide);
-      // Reset to first slide when screen size changes to avoid empty slides
-      setCurrentSlide(0);
-    };
-
-    if (typeof window !== 'undefined') {
-      window.addEventListener('resize', handleResize);
-      handleResize(); // Set initial value
-      
-      return () => window.removeEventListener('resize', handleResize);
-    }
-  }, []);
+  const [screenWidth, setScreenWidth] = useState(0);
 
   useEffect(() => {
     const fetchBrandData = async () => {
@@ -70,7 +46,6 @@ const BrandsList = () => {
         const data = await response.json();
         const extractedBrands = data.Sheet1.map((item) => ({
           name: item.Maker.trim(),
-          // Assign a truly random icon to each brand
           icon: vehicleIcons[Math.floor(Math.random() * vehicleIcons.length)],
         }));
         setBrands(extractedBrands);
@@ -84,15 +59,19 @@ const BrandsList = () => {
     fetchBrands();
   }, []);
 
-  const totalSlides = Math.ceil(brands.length / itemsPerSlide);
+  // Track screen width
+  useEffect(() => {
+    const handleResize = () => setScreenWidth(window.innerWidth);
+    handleResize(); // initial
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-  const handleNext = () => {
-    setCurrentSlide((prevSlide) => (prevSlide + 1) % totalSlides);
-  };
-
-  const handlePrev = () => {
-    setCurrentSlide((prevSlide) => (prevSlide - 1 + totalSlides) % totalSlides);
-  };
+  // Decide how many brands to show
+  let visibleBrandsCount = 12;
+  if (screenWidth < 640) visibleBrandsCount = 4;
+  else if (screenWidth < 768) visibleBrandsCount = 6;
+  else if (screenWidth < 1024) visibleBrandsCount = 8;
 
   if (loading) {
     return (
@@ -109,18 +88,18 @@ const BrandsList = () => {
     );
   }
 
-  if (brandData && brandData?.status === 'inactive') {
-    return null;
-  }
+  if (brandData?.status === "inactive") return null;
 
   return (
     <section className="relative mx-2 sm:mx-4 my-4 sm:my-6 overflow-hidden rounded-xl sm:rounded-2xl border border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-900 px-2 sm:px-4 py-8 sm:py-12 shadow-lg">
+      {/* Decorative background */}
       <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -right-16 sm:-right-32 -top-20 sm:-top-40 h-48 w-48 sm:h-96 sm:w-96 animate-pulse rounded-full bg-blue-200/15 to-purple-200/15 blur-3xl dark:bg-blue-900/20 dark:to-purple-900/20"></div>
         <div className="absolute -bottom-16 sm:-bottom-32 -left-20 sm:-left-40 h-40 w-40 sm:h-80 sm:w-80 animate-pulse rounded-full bg-orange-200/15 to-red-200/15 blur-3xl delay-1000 dark:bg-orange-900/20 dark:to-red-900/20"></div>
       </div>
-      
+
       <div className="relative mx-auto max-w-7xl translate-y-0 opacity-100 transition-all duration-1000">
+        {/* Heading */}
         <div className="mb-8 sm:mb-16 text-center px-2">
           <h2 className="mb-2 sm:mb-4 text-2xl sm:text-3xl lg:text-4xl font-bold text-app-text dark:text-gray-100">
             {brandData?.heading || "Browse Cars by Brands"}
@@ -128,7 +107,7 @@ const BrandsList = () => {
           <p className="mx-auto mb-4 sm:mb-8 max-w-xl sm:max-w-2xl text-center text-sm sm:text-base lg:text-lg text-app-text/80 dark:text-gray-300 px-4">
             {brandData?.description}
           </p>
-          
+
           <div className="flex justify-center">
             <Link href="/brands">
               <div className="group transform rounded-xl sm:rounded-2xl bg-app-button hover:bg-app-button-hover px-4 sm:px-6 py-2.5 sm:py-3.5 text-center text-sm sm:text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
@@ -140,70 +119,38 @@ const BrandsList = () => {
             </Link>
           </div>
         </div>
-        
-        <div className="relative px-6 sm:px-10">
-          <div className="overflow-hidden">
-            <div
-              className="flex transition-transform duration-500 ease-in-out"
-              style={{ transform: `translateX(-${currentSlide * 100}%)` }}
-            >
-              {Array.from({ length: totalSlides }).map((_, slideIndex) => (
-                <div
-                  key={slideIndex}
-                  className="grid w-full flex-shrink-0 gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6"
+
+        {/* Brands Grid */}
+        <div className="relative px-2 sm:px-6">
+          <div className="grid gap-3 sm:gap-4 grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6">
+            {brands.slice(0, visibleBrandsCount).map((brand, index) => {
+              const Icon = brand.icon;
+              return (
+                <Link
+                  href={`/car-for-sale?make=${encodeURIComponent(brand.name)}`}
+                  key={`${brand.name}-${index}`}
+                  className="group"
                 >
-                  {brands
-                    .slice(
-                      slideIndex * itemsPerSlide,
-                      (slideIndex + 1) * itemsPerSlide,
-                    )
-                    .map((brand, index) => {
-                      const Icon = brand.icon;
-                      return (
-                        <Link
-                          href={`/car-for-sale?make=${encodeURIComponent(brand.name)}`}
-                          key={`${brand.name}-${index}`}
-                          className="group"
-                        >
-                          <div className="animate-fade-in-up relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl border border-gray-300 hover:border-app-button dark:border-gray-600 dark:hover:border-app-button bg-white dark:bg-gray-800 p-2 sm:p-3 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-xl">
-                            <div className="relative h-10 w-10 sm:h-12 sm:w-12 lg:h-16 lg:w-16 overflow-hidden rounded-md sm:rounded-lg bg-gray-100 dark:bg-gray-700 p-2 sm:p-3 shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:shadow-md">
-                              <Icon className="h-full w-full text-gray-500 dark:text-gray-300 group-hover:text-app-button dark:group-hover:text-app-button transition-colors duration-300" />
-                            </div>
-                            <h3 className="mt-2 sm:mt-3 w-full truncate px-1 text-center text-xs sm:text-sm lg:text-base font-bold text-app-text group-hover:text-app-button dark:text-gray-100 dark:group-hover:text-app-button transition-colors duration-300">
-                              {brand.name}
-                            </h3>
-                            <div className="mx-auto mt-1 sm:mt-2 h-0.5 sm:h-1 w-0 bg-app-button rounded-full transition-all duration-500 group-hover:w-8"></div>
-                          </div>
-                        </Link>
-                      );
-                    })}
-                </div>
-              ))}
-            </div>
+                  <div
+                    className="animate-fade-in-up relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl border border-gray-300 hover:border-app-button dark:border-gray-600 dark:hover:border-app-button bg-white dark:bg-gray-800 p-2 sm:p-3 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-xl"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
+                    <div className="relative h-8 w-8 xs:h-10 xs:w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 overflow-hidden rounded-md sm:rounded-lg bg-gray-100 dark:bg-gray-700 p-1.5 sm:p-2 lg:p-3 shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:shadow-md">
+                      <Icon className="h-full w-full text-gray-500 dark:text-gray-300 group-hover:text-app-button dark:group-hover:text-app-button transition-colors duration-300" />
+                    </div>
+                    <h3 className="mt-1.5 sm:mt-2 lg:mt-3 w-full truncate px-1 text-center text-xs sm:text-sm lg:text-base font-bold text-app-text group-hover:text-app-button dark:text-gray-100 dark:group-hover:text-app-button transition-colors duration-300">
+                      {brand.name}
+                    </h3>
+                    <div className="mx-auto mt-1 sm:mt-2 h-0.5 sm:h-1 w-0 bg-app-button rounded-full transition-all duration-500 group-hover:w-6 sm:group-hover:w-8"></div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
-          
-          {/* Navigation Buttons */}
-          {totalSlides > 1 && (
-            <>
-              <button
-                onClick={handlePrev}
-                className="absolute left-0 top-1/2 z-10 -translate-y-1/2 transform rounded-full bg-white dark:bg-gray-800 text-app-text dark:text-gray-100 hover:text-app-button dark:hover:text-app-button p-2 sm:p-3 shadow-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                aria-label="Previous brands"
-              >
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-              </button>
-              <button
-                onClick={handleNext}
-                className="absolute right-0 top-1/2 z-10 -translate-y-1/2 transform rounded-full bg-white dark:bg-gray-800 text-app-text dark:text-gray-100 hover:text-app-button dark:hover:text-app-button p-2 sm:p-3 shadow-lg transition-all duration-300 hover:bg-gray-100 dark:hover:bg-gray-700 border border-gray-200 dark:border-gray-600"
-                aria-label="Next brands"
-              >
-                <ArrowRight className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6" />
-              </button>
-            </>
-          )}
         </div>
       </div>
-      
+
+      {/* Animation Style */}
       <style jsx>{`
         @keyframes fade-in-up {
           from {

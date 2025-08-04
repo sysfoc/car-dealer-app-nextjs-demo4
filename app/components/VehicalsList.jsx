@@ -24,15 +24,8 @@ const VehicleCard = ({
   selectedCurrency,
   currency,
 }) => {
-  const handleCardClick = () => {
-    window.location.href = `/car-detail/${vehicle.slug || vehicle._id}`;
-  };
-
   return (
-    <div
-      className="w-full transform cursor-pointer overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-slate-800 dark:shadow-slate-900/20"
-      onClick={handleCardClick}
-    >
+    <div className="w-full transform overflow-hidden rounded-xl bg-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:shadow-xl dark:bg-slate-800 dark:shadow-slate-900/20">
       {/* Image Section - Reduced height */}
       <div className="relative">
         <div className="relative aspect-[4/2.8] overflow-hidden">
@@ -49,23 +42,22 @@ const VehicleCard = ({
         {/* Tag Badge - Top Right Corner (if exists) */}
         {vehicle.tag && vehicle.tag !== "default" && (
           <div className="absolute right-3 top-3 z-20">
-            <span className="rounded-full bg-app-button px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
+            <span className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
               {vehicle.tag.toUpperCase()}
             </span>
           </div>
         )}
         <div className="absolute left-5 top-20 z-10">
-  <div
-    className={`origin-bottom-left -translate-x-6 -translate-y-5 -rotate-45 transform shadow-lg ${
-      vehicle.sold ? "bg-red-500" : "bg-green-500"
-    }`}
-  >
-    <div className="w-32 px-0 py-2 text-center text-xs font-bold text-white">
-      {vehicle.sold ? "SOLD" : "AVAILABLE"}
-    </div>
-  </div>
-</div>
-
+          <div
+            className={`origin-bottom-left -translate-x-6 -translate-y-5 -rotate-45 transform shadow-lg ${
+              vehicle.sold ? "bg-red-500" : "bg-green-500"
+            }`}
+          >
+            <div className="w-32 px-0 py-2 text-center text-xs font-bold text-white">
+              {vehicle.sold ? "SOLD" : "AVAILABLE"}
+            </div>
+          </div>
+        </div>
 
         <button
           onClick={(e) => {
@@ -93,7 +85,7 @@ const VehicleCard = ({
             </h3>
           </div>
           <div className="ml-4 text-right">
-            <div className="text-xl font-bold text-app-text dark:text-app-button-hover">
+            <div className="text-xl font-bold text-gray-800 dark:text-red-400">
               {selectedCurrency && selectedCurrency.symbol}{" "}
               {Math.round(
                 (vehicle &&
@@ -105,7 +97,7 @@ const VehicleCard = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 text-center">
+        <div className="mb-4 grid grid-cols-3 gap-3 text-center">
           <div className="flex flex-col items-center">
             <div className="mb-2 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 dark:bg-slate-700">
               <IoSpeedometer className="h-4 w-4 text-gray-600 dark:text-gray-300" />
@@ -140,6 +132,15 @@ const VehicleCard = ({
             </div>
           </div>
         </div>
+
+        {/* View Details Button - Now inside the card */}
+        <Link
+          href={`/car-detail/${vehicle.slug || vehicle._id}`}
+          className="block w-fit px-3 rounded-xl bg-gradient-to-r from-red-600 to-red-600/90 py-3 text-center text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-700 hover:shadow-xl dark:from-red-600 dark:to-red-600/90 dark:hover:from-red-700 dark:hover:to-red-700"
+          onClick={(e) => e.stopPropagation()}
+        >
+          View Details
+        </Link>
       </div>
     </div>
   );
@@ -308,15 +309,15 @@ const VehicalsList = ({ loadingState }) => {
     <section className="my-7 rounded-xl bg-slate-50 py-7 dark:bg-slate-900 sm:mx-8 md:my-10 md:py-10">
       <div className="mb-16">
         <div className="mx-auto max-w-4xl text-center">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-app-button/10 px-4 py-2 text-sm font-medium text-app-button dark:bg-app-button/20 dark:text-app-button">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-red-600/10 px-4 py-2 text-sm font-medium text-red-600 dark:bg-red-600/20 dark:text-red-400">
             <BiTachometer className="h-4 w-4" />
             <span>Premium Collection</span>
           </div>
-          <h2 className="mb-6 bg-gradient-to-br from-app-text via-app-text/90 to-app-text/70 bg-clip-text text-4xl font-bold leading-tight text-transparent dark:from-white dark:via-slate-100 dark:to-slate-300 md:text-5xl lg:text-6xl">
+          <h2 className="mb-6 bg-gradient-to-br from-gray-800 via-gray-800/90 to-gray-800/70 bg-clip-text text-4xl font-bold leading-tight text-transparent dark:from-white dark:via-slate-100 dark:to-slate-300 md:text-5xl lg:text-6xl">
             {listingData && listingData.heading}
           </h2>
           <Link href={"/car-for-sale"}>
-            <div className="group inline-flex transform items-center gap-3 rounded-2xl bg-gradient-to-r from-app-button to-app-button/90 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-app-button-hover hover:to-app-button-hover hover:shadow-2xl dark:from-app-button dark:to-app-button/90 dark:hover:from-app-button-hover dark:hover:to-app-button-hover">
+            <div className="group inline-flex transform items-center gap-3 rounded-2xl bg-gradient-to-r from-red-600 to-red-600/90 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-700 hover:shadow-2xl dark:from-red-600 dark:to-red-600/90 dark:hover:from-red-700 dark:hover:to-red-700">
               <span>{t("viewAll")}</span>
               <MdOutlineArrowOutward className="h-5 w-5 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
             </div>
@@ -350,6 +351,7 @@ const VehicalsList = ({ loadingState }) => {
                         </div>
                       ))}
                     </div>
+                    <Skeleton height={40} width="100%" />
                   </div>
                 </div>
               ))
@@ -373,7 +375,7 @@ const VehicalsList = ({ loadingState }) => {
         <div className="mt-10 text-center">
           <button
             onClick={handleToggleVisibility}
-            className="group inline-flex transform items-center gap-3 rounded-2xl bg-gradient-to-r from-app-button to-app-button/90 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-app-button-hover hover:to-app-button-hover hover:shadow-2xl dark:from-app-button dark:to-app-button/90 dark:hover:from-app-button-hover dark:hover:to-app-button-hover"
+            className="group inline-flex transform items-center gap-3 rounded-2xl bg-gradient-to-r from-red-600 to-red-600/90 px-8 py-4 font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-700 hover:shadow-2xl dark:from-red-600 dark:to-red-600/90 dark:hover:from-red-700 dark:hover:to-red-700"
           >
             <span>
               {visibleVehiclesCount >= vehicles.length
@@ -406,10 +408,10 @@ const VehicalsList = ({ loadingState }) => {
               />
             </svg>
           </div>
-          <h3 className="mb-4 text-2xl font-bold text-app-text dark:text-white">
+          <h3 className="mb-4 text-2xl font-bold text-gray-800 dark:text-white">
             No Vehicles Available
           </h3>
-          <p className="mx-auto max-w-md text-lg text-app-text/60 dark:text-slate-400">
+          <p className="mx-auto max-w-md text-lg text-gray-600 dark:text-slate-400">
             Our premium collection is currently being updated. Please check back
             soon for the latest additions.
           </p>

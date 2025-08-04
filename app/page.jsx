@@ -26,9 +26,9 @@ export default function Home() {
     <div>
       <MainLayout>
         <Herosection />
+      <BrandsList />
       </MainLayout>
       <VehicalsList loadingState={loading} />
-      <BrandsList />
       <BrowseCars />
       {/* <Services /> */}
       <Blog />
