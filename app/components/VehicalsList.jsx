@@ -39,8 +39,7 @@ const VehicleCard = ({
           />
         </div>
 
-        {/* Tag Badge - Top Right Corner (if exists) */}
-        {vehicle.tag && vehicle.tag !== "default" && (
+        {!vehicle.sold && vehicle.tag && vehicle.tag !== "default" && (
           <div className="absolute right-3 top-3 z-20">
             <span className="rounded-full bg-red-600 px-3 py-1.5 text-xs font-semibold text-white shadow-lg">
               {vehicle.tag.toUpperCase()}
@@ -136,7 +135,7 @@ const VehicleCard = ({
         {/* View Details Button - Now inside the card */}
         <Link
           href={`/car-detail/${vehicle.slug || vehicle._id}`}
-          className="block w-fit px-3 rounded-xl bg-gradient-to-r from-red-600 to-red-600/90 py-3 text-center text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-700 hover:shadow-xl dark:from-red-600 dark:to-red-600/90 dark:hover:from-red-700 dark:hover:to-red-700"
+          className="block w-fit rounded-xl bg-gradient-to-r from-red-600 to-red-600/90 px-3 py-3 text-center text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:scale-105 hover:from-red-700 hover:to-red-700 hover:shadow-xl dark:from-red-600 dark:to-red-600/90 dark:hover:from-red-700 dark:hover:to-red-700"
           onClick={(e) => e.stopPropagation()}
         >
           View Details
