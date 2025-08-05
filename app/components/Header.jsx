@@ -12,6 +12,7 @@ import {
   FaSun,
   FaMoon,
   FaTags,
+  FaUser,
 } from "react-icons/fa";
 import { useTranslations } from "next-intl";
 import CarSearchSidebar from "../components/Car-search-sidebar";
@@ -74,6 +75,11 @@ const Header = () => {
     { name: "Car valuation", href: "/cars/valuation", icon: FaCalculator },
     { name: "Lease deals", href: "/cars/leasing", icon: FaTags },
     { name: "Vehicle Services", href: "/cars/about-us", icon: FaHandshake },
+  ];
+
+  const mobileMenuLinks = [
+    ...quickLinks,
+    { name: "Login", href: "/login", icon: FaUser },
   ];
 
   const LogoSkeleton = () => (
@@ -146,6 +152,14 @@ const Header = () => {
             </div>
             
             <div className="flex items-center space-x-3">
+              <button
+                onClick={() => router.push("/login")}
+                aria-label="Login"
+                className="hidden items-center space-x-2 rounded-xl bg-gray-100 px-4 py-3 text-gray-600 transition-all duration-300 hover:scale-105 hover:bg-gray-200 hover:text-red-600 focus:outline-none focus:ring-0 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-red-600 lg:flex"
+              >
+                <FaUser className="h-5 w-5" />
+                <span className="text-sm font-medium">Login</span>
+              </button>
               {/* Mobile Menu Toggle (Hamburger) - Visible on smaller screens */}
               <button
                 onClick={() => setIsMobileMenuOpen(true)}
@@ -250,17 +264,17 @@ const Header = () => {
             </button>
           </div>
           
-          <div className="flex-1 space-y-1 p-4">
-            {quickLinks.map((link, index) => {
+          <div className="flex-1 space-y-2 p-4">
+            {mobileMenuLinks.map((link, index) => {
               const IconComponent = link.icon;
               return (
                 <Link
                   key={index}
                   href={link.href}
                   onClick={() => setIsMobileMenuOpen(false)} // Close menu on link click
-                  className="flex items-center space-x-3 rounded-lg px-4 py-3 text-base font-medium text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 hover:scale-[1.02] hover:shadow-sm active:scale-95 dark:text-gray-300 dark:hover:from-red-900/20 dark:hover:to-red-800/20 dark:hover:text-red-400"
+                  className="flex items-center space-x-3 rounded-lg px-3 py-2 text-base font-medium text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-red-500"
                 >
-                  <IconComponent className="h-5 w-5 transition-transform duration-300" />
+                  <IconComponent className="h-5 w-5" />
                   <span>{link.name}</span>
                 </Link>
               );
