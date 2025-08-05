@@ -23,8 +23,8 @@ const Header = ({ isDarkMode }) => {
         const response = await fetch("/api/settings/general");
         const data = await response.json();
         if (data.settings) {
-          const { logo3 } = data.settings; 
-          const logoToDisplay = logo3;
+          const { logo1 } = data.settings; 
+          const logoToDisplay = logo1;
           setLogo(logoToDisplay);
         }
       } catch (error) {
@@ -60,8 +60,8 @@ const Header = ({ isDarkMode }) => {
             ) : null}
           </div>
           <div className="flex flex-col items-start justify-center">
-            <span className="text-lg font-bold tracking-tight text-app-text dark:text-white">
-              CruiseControl
+           <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
+                        WindScreen
             </span>
             <span className="text-xs font-medium text-app-text/60 dark:text-gray-400">
               Built to sell cars

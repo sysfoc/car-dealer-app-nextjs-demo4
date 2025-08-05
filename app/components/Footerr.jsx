@@ -105,7 +105,7 @@ const Footerr = ({ isDarkMode }) => {
         setLogoLoading(true);
         const res = await fetch("/api/settings/general", { cache: "no-store" });
         const data = await res.json();
-        setLogo(data?.settings?.logo3);
+        setLogo(data?.settings?.logo1);
       } catch (error) {
         console.error("Failed to fetch footer Logo:", error);
       } finally {

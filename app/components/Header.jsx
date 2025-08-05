@@ -38,8 +38,8 @@ const Header = () => {
       try {
         const response = await fetch("/api/settings/general", { cache: "no-store" });
         const data = await response.json();
-        if (data?.settings?.logo3) {
-          setLogo(data?.settings?.logo3);
+        if (data?.settings?.logo1) {
+          setLogo(data?.settings?.logo1);
         }
         setTopSettings((prev) => ({
           hideDarkMode: false,
@@ -97,19 +97,17 @@ const Header = () => {
                   <LogoSkeleton />
                 ) : logo ? (
                   <Link href="/" className="flex items-center space-x-3 group">
-                    <div className="rounded-xl bg-white shadow-lg ring-1 ring-red-100 group-hover:ring-red-300 transition-all duration-300 dark:bg-gray-800 dark:ring-red-800 dark:group-hover:ring-red-600">
-                      <Image
+                    <Image
                         src={logo}
                         alt="Logo"
                         width={64}
                         height={64}
-                        className="h-12 w-14 object-contain"
+                        className="h-16 w-16 object-contain"
                         onError={() => setLogo("")}
                       />
-                    </div>
                     <div className="flex flex-col">
                       <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
-                        CruiseControl
+                        WindScreen
                       </span>
                       <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
                         Built to Sell Cars
@@ -120,7 +118,7 @@ const Header = () => {
                   <Link href="/" className="flex items-center space-x-3 group">
                     <div className="flex flex-col">
                       <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
-                        CruiseControl
+                        WindScreen
                       </span>
                       <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
                         Built to Sell Cars

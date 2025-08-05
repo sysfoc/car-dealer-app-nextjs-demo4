@@ -110,7 +110,7 @@ const BrandsList = () => {
 
           <div className="flex justify-center">
             <Link href="/brands">
-              <div className="group transform rounded-xl sm:rounded-2xl bg-app-button hover:bg-app-button-hover px-4 sm:px-6 py-2.5 sm:py-3.5 text-center text-sm sm:text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
+              <div className="group transform rounded-xl sm:rounded-2xl bg-red-600 hover:bg-red-700 px-4 sm:px-6 py-2.5 sm:py-3.5 text-center text-sm sm:text-base font-semibold text-white shadow-lg transition-all duration-300 hover:scale-[1.02] hover:shadow-xl">
                 <div className="flex items-center justify-center gap-2">
                   <span>View All Brands</span>
                   <MdOutlineArrowOutward className="h-3 w-3 sm:h-4 sm:w-4 transition-transform duration-300 group-hover:-translate-y-1 group-hover:translate-x-1" />
@@ -136,9 +136,9 @@ const BrandsList = () => {
                     style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <div className="relative h-8 w-8 xs:h-10 xs:w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 overflow-hidden rounded-md sm:rounded-lg bg-gray-100 dark:bg-gray-700 p-1.5 sm:p-2 lg:p-3 shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:shadow-md">
-                      <Icon className="h-full w-full text-gray-500 dark:text-gray-300 group-hover:text-app-button dark:group-hover:text-app-button transition-colors duration-300" />
+                      <Icon className="h-full w-full text-app-button dark:text-app-button transition-all duration-300" />
                     </div>
-                    <h3 className="mt-1.5 sm:mt-2 lg:mt-3 w-full truncate px-1 text-center text-xs sm:text-sm lg:text-base font-bold text-app-text group-hover:text-app-button dark:text-gray-100 dark:group-hover:text-app-button transition-colors duration-300">
+                    <h3 className="mt-1.5 sm:mt-2 lg:mt-3 w-full truncate px-1 text-center text-xs sm:text-sm lg:text-base font-bold text-app-button dark:text-app-button transition-all duration-300">
                       {brand.name}
                     </h3>
                     <div className="mx-auto mt-1 sm:mt-2 h-0.5 sm:h-1 w-0 bg-app-button rounded-full transition-all duration-500 group-hover:w-6 sm:group-hover:w-8"></div>

@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import axios from "axios";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useAuth } from "../context/UserContext"
-import { IoLockClosedOutline, IoMail } from "react-icons/io5";
-import { MdFiberPin } from "react-icons/md";
+import { useAuth } from "../context/UserContext";
+import { IoLockClosedOutline, IoMail, IoCopyOutline } from "react-icons/io5";
+import { MdFiberPin, MdAdminPanelSettings, MdPerson } from "react-icons/md";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -19,6 +19,9 @@ export default function LoginPage() {
   const [buttonDisabled, setButtonDisabled] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [activeCredential, setActiveCredential] = useState<
+    "superadmin" | "user"
+  >("superadmin"); // Toggle state
   const { refreshUser } = useAuth();
 
   const onLogin = async () => {
@@ -30,8 +33,10 @@ export default function LoginPage() {
         withCredentials: true,
       });
 
-      toast.success(`${response.data.role.charAt(0).toUpperCase() + response.data.role?.slice(1)} Login successful!`);
-      
+      toast.success(
+        `${response.data.role.charAt(0).toUpperCase() + response.data.role?.slice(1)} Login successful!`,
+      );
+
       const receivedRole = response.data.role?.toLowerCase()?.trim();
       if (!receivedRole) {
         throw new Error("No role received from server");
@@ -51,83 +56,264 @@ export default function LoginPage() {
     }
   };
 
+  const copyToClipboard = (text: string, type: string) => {
+    navigator.clipboard.writeText(text);
+    toast.success(`${type} copied to clipboard!`);
+  };
+
   useEffect(() => {
     setButtonDisabled(!user.email || !user.password);
   }, [user]);
 
+  const demoCredentials: {
+    superadmin: {
+      email: string;
+      password: string;
+      pin: string;
+      role: string;
+    };
+    user: {
+      email: string;
+      password: string;
+      pin: string;
+      role: string;
+    };
+  } = {
+    superadmin: {
+      email: "sysfoc_admin@gmail.com",
+      password: "sysfoc_admin",
+      pin: "123456",
+      role: "superadmin",
+    },
+    user: {
+      email: "Sysfoc_User@gmail.com",
+      password: "Sysfoc_User@gmail.com",
+      pin: "123456",
+      role: "user",
+    },
+  };
+
+  const currentCredentials = demoCredentials[activeCredential];
+
   return (
-   <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex mt-14 md:mt-16">
-      {/* Left Side - Branding */}
-      <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-app-text via-slate-700 to-slate-800 dark:from-app-text dark:via-slate-700 dark:to-slate-800 flex-col justify-center items-center p-12 text-white relative overflow-hidden">
-        {/* Background Pattern */}
+    <div className="mt-14 flex min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 md:mt-16">
+      <div className="relative hidden flex-col items-center justify-center overflow-hidden bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-700 p-12 text-white dark:from-blue-700 dark:via-indigo-700 dark:to-purple-800 lg:flex lg:w-1/2">
         <div className="absolute inset-0 opacity-10">
-          <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-br from-white via-transparent to-transparent"></div>
-          <div className="absolute bottom-0 right-0 w-96 h-96 bg-white rounded-full opacity-5 transform translate-x-32 translate-y-32"></div>
-          <div className="absolute top-20 right-20 w-64 h-64 bg-white rounded-full opacity-5"></div>
+          <div className="absolute left-0 top-0 h-full w-full bg-gradient-to-br from-white via-transparent to-transparent"></div>
+          <div className="absolute bottom-0 right-0 h-96 w-96 translate-x-32 translate-y-32 transform rounded-full bg-white opacity-5"></div>
+          <div className="absolute right-20 top-20 h-64 w-64 rounded-full bg-white opacity-5"></div>
         </div>
 
-        {/* Content */}
-        <div className="relative z-10 text-center max-w-md">
-          {/* Icon */}
-          <div className="w-24 h-24 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center mb-8 mx-auto">
-            <svg className="w-12 h-12 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
+        <div className="relative z-10 w-full max-w-lg text-center">
+          <div className="mb-8">
+            <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-white/20 backdrop-blur-sm">
+              <svg
+                className="h-10 w-10 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
+              </svg>
+            </div>
+            <h1 className="text-3xl font-bold">
+              {loading ? "Signing In..." : "Welcome Back"}
+            </h1>
           </div>
 
-          {/* Title */}
-          <h1 className="text-4xl font-bold mb-4">
-            {loading ? "Signing In..." : "Welcome Back"}
-          </h1>
+          <div className="rounded-xl border border-white/20 bg-white/10 p-5 backdrop-blur-sm">
+            <div className="mb-4 flex items-center justify-center">
+              <svg
+                className="mr-2 h-5 w-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 7a2 2 0 012 2m0 0a2 2 0 012 2m-2-2a2 2 0 00-2 2m0 0a2 2 0 01-2 2m2-2H9m12 0v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6a2 2 0 012-2h12zM9 7V5a2 2 0 012-2h2a2 2 0 012 2v2"
+                />
+              </svg>
+              <h2 className="text-lg font-semibold">Demo Credentials</h2>
+            </div>
 
-          {/* Description */}
-          <p className="text-xl text-blue-100 mb-8">
-            Please sign in to your account to continue
-          </p>
+            <div className="mb-4 flex rounded-lg bg-white/10 p-1">
+              <button
+                onClick={() => setActiveCredential("superadmin")}
+                className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                  activeCredential === "superadmin"
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-blue-100 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <MdAdminPanelSettings className="mr-1.5 h-4 w-4" />
+                Admin
+              </button>
+              <button
+                onClick={() => setActiveCredential("user")}
+                className={`flex flex-1 items-center justify-center rounded-md px-3 py-2 text-sm font-medium transition-all duration-200 ${
+                  activeCredential === "user"
+                    ? "bg-white/20 text-white shadow-sm"
+                    : "text-blue-100 hover:bg-white/10 hover:text-white"
+                }`}
+              >
+                <MdPerson className="mr-1.5 h-4 w-4" />
+                Staff
+              </button>
+            </div>
+            <div className="space-y-3">
+              <div className="group flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-200">
+                    Email
+                  </p>
+                  <p className="truncate font-mono text-sm text-white">
+                    {currentCredentials.email}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    copyToClipboard(currentCredentials.email, "Email")
+                  }
+                  className="ml-2 rounded-md p-1.5 opacity-60 transition-colors hover:bg-white/10 hover:opacity-100"
+                >
+                  <IoCopyOutline className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="group flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-200">
+                    Password
+                  </p>
+                  <p className="truncate font-mono text-sm text-white">
+                    {currentCredentials.password}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    copyToClipboard(currentCredentials.password, "Password")
+                  }
+                  className="ml-2 rounded-md p-1.5 opacity-60 transition-colors hover:bg-white/10 hover:opacity-100"
+                >
+                  <IoCopyOutline className="h-4 w-4" />
+                </button>
+              </div>
+
+              <div className="group flex items-center justify-between">
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-blue-200">
+                    Security PIN
+                  </p>
+                  <p className="truncate font-mono text-sm text-white">
+                    {currentCredentials.pin}
+                  </p>
+                </div>
+                <button
+                  onClick={() => copyToClipboard(currentCredentials.pin, "PIN")}
+                  className="ml-2 rounded-md p-1.5 opacity-60 transition-colors hover:bg-white/10 hover:opacity-100"
+                >
+                  <IoCopyOutline className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setUser(currentCredentials)}
+              className="mt-4 flex w-full items-center justify-center rounded-lg border border-white/20 bg-white/15 px-4 py-2.5 text-sm font-medium text-white transition-all duration-200 hover:bg-white/25"
+            >
+              <svg
+                className="mr-2 h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 10V3L4 14h7v7l9-11h-7z"
+                />
+              </svg>
+              Auto-Fill Form
+            </button>
+
+            <div className="mt-3 rounded-lg bg-white/5 p-2">
+              <p className="text-center text-xs text-blue-100">
+                Click credentials to copy • Use toggle to switch roles
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-4 md:p-2 ">
+      <div className="mt-10 flex w-full items-start justify-center p-4 md:p-2 lg:w-1/2 ">
         <div className="w-full max-w-md">
-          {/* Mobile Header - Only visible on small screens */}
-          <div className="lg:hidden text-center mb-6">
-            <div className="w-16 h-16 bg-gradient-to-r from-app-text to-slate-700 dark:from-app-text dark:to-slate-700 rounded-full flex items-center justify-center mx-auto mb-4">
-              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          <div className="mb-6 text-center lg:hidden">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-blue-700 dark:to-indigo-700">
+              <svg
+                className="h-8 w-8 text-white"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-app-text dark:text-white mb-2">
+            <h1 className="mb-2 text-3xl font-bold text-gray-900 dark:text-white">
               {loading ? "Signing In..." : "Welcome Back"}
             </h1>
-            <p className="text-app-text/70 dark:text-gray-300">Please sign in to your account</p>
+            <p className="text-gray-600 dark:text-gray-300">
+              Please sign in to your account
+            </p>
           </div>
 
-          {/* Login Form Card */}
-          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/20 dark:border-gray-700/20 p-8">
-            {/* Error Message */}
+          <div className="rounded-2xl border border-white/20 bg-white/80 p-8 shadow-xl backdrop-blur-sm dark:border-gray-700/20 dark:bg-gray-800/80">
             {error && (
-              <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/30 border border-app-button/30 dark:border-app-button rounded-lg flex items-start">
-                <svg className="w-5 h-5 text-app-button dark:text-app-button mt-0.5 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+              <div className="mb-6 flex items-start rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-700 dark:bg-red-900/30">
+                <svg
+                  className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-red-500 dark:text-red-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
                 </svg>
-                <span className="text-app-button dark:text-app-button text-sm">{error}</span>
+                <span className="text-sm text-red-800 dark:text-red-200">
+                  {error}
+                </span>
               </div>
             )}
 
-            {/* Form Fields */}
-            <div className="space-y-5">
-              {/* Email Field */}
+            <div className="space-y-4">
               <div>
-                <label htmlFor="email" className="block text-sm font-medium text-app-text dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="email"
+                  className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Email Address
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoMail className="text-app-button dark:text-app-button" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <IoMail className="text-gray-700 dark:text-gray-400" />
                   </div>
                   <input
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-gray-700/50 text-app-text dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-app-text focus:border-transparent transition-all duration-200"
+                    className="w-full rounded-lg border border-gray-300 bg-white/50 py-3 pl-10 pr-4 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700/50 dark:text-white dark:placeholder-gray-400"
                     id="email"
                     type="email"
                     value={user.email}
@@ -140,17 +326,19 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Password Field */}
               <div>
-                <label htmlFor="password" className="block text-sm font-medium text-app-text dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="password"
+                  className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Password
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <IoLockClosedOutline className="text-app-text/70 dark:text-gray-400" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <IoLockClosedOutline className="text-gray-700 dark:text-gray-400" />
                   </div>
                   <input
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-gray-700/50 text-app-text dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-app-text focus:border-transparent transition-all duration-200"
+                    className="w-full rounded-lg border border-gray-300 bg-white/50 py-3 pl-10 pr-4 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700/50 dark:text-white dark:placeholder-gray-400"
                     id="password"
                     type="password"
                     value={user.password}
@@ -163,17 +351,19 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* PIN Field */}
               <div>
-                <label htmlFor="pin" className="block text-sm font-medium text-app-text dark:text-gray-300 mb-2">
+                <label
+                  htmlFor="pin"
+                  className="mb-2 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                >
                   Security PIN
                 </label>
                 <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                   <MdFiberPin className="text-app-text dark:text-app-text" />
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                    <MdFiberPin className="text-blue-700 dark:text-blue-400" />
                   </div>
                   <input
-                    className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white/50 dark:bg-gray-700/50 text-app-text dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-app-text focus:border-transparent transition-all duration-200"
+                    className="w-full rounded-lg border border-gray-300 bg-white/50 py-3 pl-10 pr-4 text-gray-900 placeholder-gray-500 transition-all duration-200 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700/50 dark:text-white dark:placeholder-gray-400"
                     id="pin"
                     type="text"
                     value={user.pin || ""}
@@ -186,40 +376,21 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              {/* Demo Credentials */}
-              <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="border-t border-gray-200 pt-5 dark:border-gray-700">
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <button
-                    onClick={() =>
-                      setUser({
-                        email: "sysfoc_admin@gmail.com",
-                        password: "sysfoc_admin",
-                        role: "superadmin",
-                        pin: "123456",
-                      })
-                    }
-                    className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-app-text to-slate-700 dark:from-app-text dark:to-slate-800 text-white text-sm font-medium rounded-lg hover:from-slate-700 hover:to-slate-800 dark:hover:from-slate-700 dark:hover:to-slate-900 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    onClick={() => setUser(demoCredentials.superadmin)}
+                    className="flex transform items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-blue-800 hover:shadow-xl dark:from-blue-700 dark:to-blue-800 dark:hover:from-blue-800 dark:hover:to-blue-900"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-6-3a2 2 0 11-4 0 2 2 0 014 0zm-2 4a5 5 0 00-4.546 2.916A5.986 5.986 0 0010 16a5.986 5.986 0 004.546-2.084A5 5 0 0010 11z" clipRule="evenodd" />
-                    </svg>
+                    <MdAdminPanelSettings className="mr-2 h-4 w-4" />
                     SuperAdmin
                   </button>
 
                   <button
-                    onClick={() =>
-                      setUser({
-                        email: "Sysfoc_User@gmail.com",
-                        password: "Sysfoc_User@gmail.com",
-                        role: "user",
-                        pin: "123456",
-                      })
-                    }
-                    className="flex items-center justify-center px-4 py-3 bg-gradient-to-r from-app-button to-app-button-hover dark:from-app-button dark:to-app-button-hover text-white text-sm font-medium rounded-lg hover:from-app-button-hover hover:to-red-700 dark:hover:from-app-button-hover dark:hover:to-red-800 transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+                    onClick={() => setUser(demoCredentials.user)}
+                    className="flex transform items-center justify-center rounded-lg bg-gradient-to-r from-gray-600 to-gray-700 px-4 py-3 text-sm font-medium text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-gray-700 hover:to-gray-800 hover:shadow-xl dark:from-gray-700 dark:to-gray-800 dark:hover:from-gray-800 dark:hover:to-gray-900"
                   >
-                    <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                      <path fillRule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clipRule="evenodd" />
-                    </svg>
+                    <MdPerson className="mr-2 h-4 w-4" />
                     Staff Login
                   </button>
                 </div>
@@ -229,13 +400,28 @@ export default function LoginPage() {
               <button
                 onClick={onLogin}
                 disabled={buttonDisabled || loading}
-                className="w-full bg-gradient-to-r from-app-text to-slate-700 dark:from-app-text dark:to-slate-700 text-white font-semibold py-3 px-6 rounded-lg hover:from-slate-700 hover:to-slate-800 dark:hover:from-slate-700 dark:hover:to-slate-800 focus:outline-none focus:ring-2 focus:ring-app-text focus:ring-offset-2 dark:focus:ring-offset-gray-800 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 disabled:transform-none"
+                className="w-full transform rounded-lg bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 font-semibold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:from-blue-700 hover:to-indigo-700 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:transform-none disabled:cursor-not-allowed disabled:opacity-50 dark:from-blue-700 dark:to-indigo-700 dark:hover:from-blue-800 dark:hover:to-indigo-800 dark:focus:ring-offset-gray-800"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <svg
+                      className="-ml-1 mr-3 h-5 w-5 animate-spin text-white"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
                     </svg>
                     Processing...
                   </div>

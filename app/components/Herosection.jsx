@@ -152,7 +152,7 @@ const HeroSection = () => {
 
       {/* Content Container */}
       <div className="relative z-10 mx-auto min-h-screen max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex min-h-screen items-center py-20">
+        <div className="flex min-h-screen items-center py-16">
           <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
             
             {/* Text Content - Left Side */}
@@ -255,10 +255,7 @@ const HeroSection = () => {
       <div className="absolute inset-0 opacity-5 z-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(255,255,255)_1px,transparent_0)] bg-[size:50px_50px]"></div>
       </div>
-
-      {/* Bottom Fade */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white dark:from-gray-900 to-transparent z-10"></div>
-    </section>
+ </section>
   );
 };
 

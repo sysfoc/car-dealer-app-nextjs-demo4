@@ -11,9 +11,9 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        'app-text': '#182641',
-        'app-button': '#DC3C22',
-        'app-button-hover': '#B8321C',
+        "app-text": "#182641",
+        "app-button": "#DC2626",
+        "app-button-hover": "#B91C1C",
       },
     },
   },
