@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -24,19 +24,32 @@ const Header = () => {
   const [darkMode, setDarkMode] = useState(false);
   const [logo, setLogo] = useState("");
   const [logoLoading, setLogoLoading] = useState(true);
-  const [topSettings, setTopSettings] = useState({});
+  const [topSettings, setTopSettings] = useState({
+    hideDarkMode: false,
+    hideFavourite: false,
+    hideLogo: false,
+  });
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const router = useRouter();
 
   const { isSidebarOpen, toggleSidebar, closeSidebar } = useSidebar();
   
+  // Optimized: Initialize dark mode synchronously to prevent flash
   useEffect(() => {
-    setDarkMode(document.documentElement.classList.contains("dark"));
+    // Check localStorage first, then fallback to system preference
+    const savedTheme = localStorage.getItem('theme');
+    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && document.documentElement.classList.contains("dark")) || (!savedTheme && systemDark);
+    
+    setDarkMode(shouldBeDark);
+    document.documentElement.classList.toggle('dark', shouldBeDark);
   }, []);
 
+  // Separate logo and settings fetch
   useEffect(() => {
     const fetchSettings = async () => {
       try {
+        setLogoLoading(true);
         const response = await fetch("/api/settings/general", { cache: "no-store" });
         const data = await response.json();
         if (data?.settings?.logo1) {
@@ -54,35 +67,52 @@ const Header = () => {
         setLogoLoading(false);
       }
     };
-    fetchSettings();
+    fetchSettings(); // Call immediately
   }, []);
 
-  const toggleDarkMode = () => {
-    setDarkMode(!darkMode);
-    if (document.documentElement.classList.contains("dark")) {
-      document.documentElement.classList.remove("dark");
-    } else {
-      document.documentElement.classList.add("dark");
-    }
-  };
+  // Optimized: Memoized callbacks
+  const toggleDarkMode = useCallback(() => {
+    const newDarkMode = !darkMode;
+    setDarkMode(newDarkMode);
+    document.documentElement.classList.toggle("dark", newDarkMode);
+    localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+  }, [darkMode]);
 
-  const toggleSearchSidebar = () => {
+  const toggleSearchSidebar = useCallback(() => {
     toggleSidebar(); // Use context function
-  };
+  }, [toggleSidebar]);
 
-  const quickLinks = [
+  const handleMobileMenuOpen = useCallback(() => {
+    setIsMobileMenuOpen(true);
+  }, []);
+
+  const handleMobileMenuClose = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  const navigateToLogin = useCallback(() => {
+    router.push("/login");
+  }, [router]);
+
+  const navigateToLikedCars = useCallback(() => {
+    router.push("/liked-cars");
+  }, [router]);
+
+  // Optimized: Memoized quick links to prevent recreation on every render
+  const quickLinks = useMemo(() => [
     { name: "Find Cars", href: "/car-for-sale", icon: FaCar },
     { name: "Car valuation", href: "/cars/valuation", icon: FaCalculator },
     { name: "Lease deals", href: "/cars/leasing", icon: FaTags },
     { name: "Vehicle Services", href: "/cars/about-us", icon: FaHandshake },
-  ];
+  ], []);
 
-  const mobileMenuLinks = [
+  const mobileMenuLinks = useMemo(() => [
     ...quickLinks,
     { name: "Login", href: "/login", icon: FaUser },
-  ];
+  ], [quickLinks]);
 
-  const LogoSkeleton = () => (
+  // Optimized: Memoized logo skeleton component
+  const LogoSkeleton = useMemo(() => (
     <div className="flex items-center space-x-3">
       <div className="h-12 w-12 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
       <div className="flex flex-col space-y-2">
@@ -90,57 +120,67 @@ const Header = () => {
         <div className="h-3 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
       </div>
     </div>
-  );
+  ), []);
+
+  // Optimized: Memoized logo component
+  const LogoComponent = useMemo(() => {
+    if (topSettings.hideLogo) return null;
+
+    if (logoLoading) {
+      return LogoSkeleton;
+    }
+
+    if (logo) {
+      return (
+        <Link href="/" className="flex items-center space-x-3 group">
+          <Image
+            src={logo}
+            alt="Logo"
+            width={64}
+            height={64}
+            className="h-16 w-16 object-contain"
+            priority={true}
+            onError={() => setLogo("")}
+          />
+          <div className="flex flex-col">
+            <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
+              WindScreen
+            </span>
+            <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
+              Built to Sell Cars
+            </span>
+          </div>
+        </Link>
+      );
+    }
+
+    return (
+      <Link href="/" className="flex items-center space-x-3 group">
+        <div className="flex flex-col">
+          <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
+            WindScreen
+          </span>
+          <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
+            Built to Sell Cars
+          </span>
+        </div>
+      </Link>
+    );
+  }, [topSettings.hideLogo, logoLoading, logo, LogoSkeleton]);
 
   return (
     <>
       <nav className="fixed left-0 right-0 top-0 z-50 bg-white shadow-lg backdrop-blur-lg transition-all duration-300 border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-4">
           <div className="flex h-16 items-center justify-between">
-            {!topSettings.hideLogo && (
-              <>
-                {logoLoading ? (
-                  <LogoSkeleton />
-                ) : logo ? (
-                  <Link href="/" className="flex items-center space-x-3 group">
-                    <Image
-                        src={logo}
-                        alt="Logo"
-                        width={64}
-                        height={64}
-                        className="h-16 w-16 object-contain"
-                        onError={() => setLogo("")}
-                      />
-                    <div className="flex flex-col">
-                      <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
-                        WindScreen
-                      </span>
-                      <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
-                        Built to Sell Cars
-                      </span>
-                    </div>
-                  </Link>
-                ) : (
-                  <Link href="/" className="flex items-center space-x-3 group">
-                    <div className="flex flex-col">
-                      <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
-                        WindScreen
-                      </span>
-                      <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
-                        Built to Sell Cars
-                      </span>
-                    </div>
-                  </Link>
-                )}
-              </>
-            )}
+            {LogoComponent}
             
             <div className="hidden items-center space-x-6 lg:flex">
               {quickLinks.map((link, index) => {
                 const IconComponent = link.icon;
                 return (
                   <Link
-                    key={index}
+                    key={link.href} // Use href as key for better stability
                     href={link.href}
                     className="group flex items-center space-x-2 rounded-lg px-4 py-2.5 text-sm font-medium text-gray-700 transition-all duration-300 hover:bg-gradient-to-r hover:from-red-500 hover:to-red-600 hover:text-white hover:shadow-lg hover:shadow-red-500/25 active:scale-95 dark:text-gray-300 dark:hover:text-white"
                   >
@@ -153,7 +193,7 @@ const Header = () => {
             
             <div className="flex items-center space-x-3">
               <button
-                onClick={() => router.push("/login")}
+                onClick={navigateToLogin}
                 aria-label="Login"
                 className="hidden items-center space-x-2 rounded-xl bg-gray-100 px-4 py-3 text-gray-600 transition-all duration-300 hover:scale-105 hover:bg-gray-200 hover:text-red-600 focus:outline-none focus:ring-0 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-red-600 lg:flex"
               >
@@ -162,7 +202,7 @@ const Header = () => {
               </button>
               {/* Mobile Menu Toggle (Hamburger) - Visible on smaller screens */}
               <button
-                onClick={() => setIsMobileMenuOpen(true)}
+                onClick={handleMobileMenuOpen}
                 aria-label="Open Menu"
                 className="group relative rounded-xl bg-gray-100 p-3 transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:shadow-lg hover:shadow-red-500/25 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-white lg:hidden dark:bg-gray-800 dark:focus:ring-offset-gray-900"
               >
@@ -192,7 +232,7 @@ const Header = () => {
 
               {!topSettings.hideFavourite && (
                 <button
-                  onClick={() => router.push("/liked-cars")}
+                  onClick={navigateToLikedCars}
                   aria-label="Liked Cars"
                   className="group relative hidden rounded-xl bg-gray-100 p-3 transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:shadow-lg hover:shadow-red-500/25 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-white md:flex dark:bg-gray-800 dark:focus:ring-offset-gray-900"
                 >
@@ -240,7 +280,7 @@ const Header = () => {
       {isMobileMenuOpen && (
         <div
           className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
-          onClick={() => setIsMobileMenuOpen(false)}
+          onClick={handleMobileMenuClose}
         />
       )}
       
@@ -256,7 +296,7 @@ const Header = () => {
               Quick Links
             </h2>
             <button
-              onClick={() => setIsMobileMenuOpen(false)}
+              onClick={handleMobileMenuClose}
               aria-label="Close Menu"
               className="rounded-lg p-2 text-gray-600 transition-all duration-300 hover:bg-gradient-to-r hover:from-red-50 hover:to-red-100 hover:text-red-600 hover:scale-105 focus:outline-none focus:ring-2 focus:ring-red-500/50 dark:text-gray-400 dark:hover:from-red-900/20 dark:hover:to-red-800/20 dark:hover:text-red-400"
             >
@@ -265,13 +305,13 @@ const Header = () => {
           </div>
           
           <div className="flex-1 space-y-2 p-4">
-            {mobileMenuLinks.map((link, index) => {
+            {mobileMenuLinks.map((link) => {
               const IconComponent = link.icon;
               return (
                 <Link
-                  key={index}
+                  key={link.href} // Use href as key for better stability
                   href={link.href}
-                  onClick={() => setIsMobileMenuOpen(false)} // Close menu on link click
+                  onClick={handleMobileMenuClose} // Close menu on link click
                   className="flex items-center space-x-3 rounded-lg px-3 py-2 text-base font-medium text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-red-600 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-red-500"
                 >
                   <IconComponent className="h-5 w-5" />
