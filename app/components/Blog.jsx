@@ -126,16 +126,16 @@ const Blog = () => {
                     key={`${blog.slug}-${index}`}
                   >
                     <div
-                      className="group relative transform cursor-pointer overflow-hidden rounded-2xl border border-gray-200/50 bg-white/70 backdrop-blur-md transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 dark:border-white/20 dark:bg-white/10 dark:hover:shadow-blue-500/25"
+                      className="group relative flex h-[420px] transform cursor-pointer flex-col overflow-hidden rounded-2xl border border-gray-200/50 bg-white/70 backdrop-blur-md transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 dark:border-white/20 dark:bg-white/10 dark:hover:shadow-blue-500/25"
                       style={{
                         animationDelay: `${index * 100}ms`,
                       }}
                     >
                       {/* Background glow effect */}
                       <div className="absolute inset-0 bg-blue-500/5 opacity-0 transition-opacity duration-500 group-hover:opacity-100 dark:bg-blue-500/10"></div>
-                      <div className="relative z-10">
+                      <div className="relative z-10 flex h-full flex-col">
                         <div className="relative overflow-hidden">
-                          <div className="relative h-48 sm:h-52">
+                          <div className="relative h-48">
                             <Image
                               src={blog.image || "/sydney.jpg"}
                               alt={blog.metaTitle || blog.h1 || "Blog post"}
@@ -145,18 +145,20 @@ const Blog = () => {
                             <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent"></div>
                           </div>
                         </div>
-                        <div className="space-y-4 p-6">
-                          <h3 className="line-clamp-2 text-lg font-bold leading-tight text-gray-800 transition-colors duration-300 hover:text-red-600 dark:text-gray-100 dark:hover:text-red-400 md:text-xl">
-                            {blog.h1 || blog.metaTitle}
-                          </h3>
+                        <div className="flex flex-1 flex-col justify-between p-6">
+                          <div className="space-y-3">
+                            <h3 className="line-clamp-2 text-lg font-bold leading-tight text-gray-800 transition-colors duration-300 hover:text-red-600 dark:text-gray-100 dark:hover:text-red-400 md:text-xl">
+                              {blog.h1 || blog.metaTitle}
+                            </h3>
 
-                          {blog.metaDescription && (
-                            <p className="line-clamp-2 text-sm leading-relaxed text-app-text/70 dark:text-gray-300/80">
-                              {blog.metaDescription}
-                            </p>
-                          )}
+                            {blog.metaDescription && (
+                              <p className="line-clamp-3 text-sm leading-relaxed text-app-text/70 dark:text-gray-300/80">
+                                {blog.metaDescription}
+                              </p>
+                            )}
+                          </div>
 
-                          <div className="flex items-center justify-between pt-2">
+                          <div className="flex items-center justify-between pt-4">
                             <div className="text-xs text-app-text/60 dark:text-gray-400">
                               {new Date(blog.createdAt).toLocaleDateString(
                                 "en-US",
@@ -170,7 +172,7 @@ const Blog = () => {
 
                             <div className="flex translate-x-2 transform items-center space-x-2 opacity-0 transition-all duration-300 group-hover:translate-x-0 group-hover:opacity-100">
                               <div className="h-0.5 w-6 rounded-full bg-red-600"></div>
-                              <span className="bg-red-600 text-xs font-medium">
+                              <span className="text-xs font-medium text-red-600">
                                 View Detail
                               </span>
                             </div>
@@ -219,7 +221,7 @@ const Blog = () => {
                       strokeLinecap="round"
                       strokeLinejoin="round"
                       strokeWidth={2}
-                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
+                      d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 01-2-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z"
                     />
                   </svg>
                 </div>
