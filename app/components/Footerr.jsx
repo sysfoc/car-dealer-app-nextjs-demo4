@@ -1,119 +1,286 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import LanguageSwitching from "../components/LanguageSwitching";
 import { useTranslations } from "next-intl";
 import { iconComponentsMap, allSocialPlatforms } from "../lib/social-icons";
 
+const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_KEYS = {
+  FOOTER_SETTINGS: 'footer_settings',
+  HOMEPAGE_DATA: 'footer_homepage',
+  SOCIAL_MEDIA: 'footer_socials'
+};
+
+const CacheManager = {
+  get: (key) => {
+    try {
+      if (typeof window === 'undefined') return null;
+      
+      const cached = localStorage.getItem(key);
+      if (!cached) return null;
+      
+      const { data, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      
+      if (now - timestamp > CACHE_DURATION) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.warn('Cache retrieval failed for key:', key, error);
+      return null;
+    }
+  },
+
+  set: (key, data) => {
+    try {
+      if (typeof window === 'undefined') return;
+      
+      const cacheData = {
+        data,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem(key, JSON.stringify(cacheData));
+    } catch (error) {
+      console.warn('Cache storage failed for key:', key, error);
+    }
+  },
+
+  clear: (key) => {
+    try {
+      if (typeof window === 'undefined') return;
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.warn('Cache clear failed for key:', key, error);
+    }
+  }
+};
+
+const DEFAULT_FOOTER_SETTINGS = {
+  col1Heading: null,
+  col2Heading: null,
+  col3Heading: null,
+};
+
+const DEFAULT_HOMEPAGE_DATA = {
+  monday: null,
+  tuesday: null,
+  wednesday: null,
+  thursday: null,
+  friday: null,
+  saturday: null,
+};
+
 const Footerr = ({ isDarkMode }) => {
   const t = useTranslations("Footer");
-  const [footerSettings, setFooterSettings] = useState(null);
+  const mountedRef = useRef(true);
+
+  const [footerSettings, setFooterSettings] = useState(DEFAULT_FOOTER_SETTINGS);
   const [logo, setLogo] = useState("");
   const [logoLoading, setLogoLoading] = useState(true);
-  const [homepageData, setHomepageData] = useState(null);
+  const [homepageData, setHomepageData] = useState(DEFAULT_HOMEPAGE_DATA);
   const [fetchedSocials, setFetchedSocials] = useState([]);
 
-  useEffect(() => {
-    const fetchHomepageData = async () => {
-      try {
-        const res = await fetch("/api/homepage", { cache: "no-store" });
-        const data = await res.json();
-        setHomepageData(data?.footer);
-      } catch (error) {
-        console.error("Failed to fetch homepage data:", error);
+  const tradingHours = useMemo(() => [
+    { day: t("monday"), hours: homepageData?.monday || t("openingHours") },
+    { day: t("tuesday"), hours: homepageData?.tuesday || t("openingHours") },
+    { day: t("wednesday"), hours: homepageData?.wednesday || t("openingHours") },
+    { day: t("thursday"), hours: homepageData?.thursday || t("openingHours") },
+    { day: t("friday"), hours: homepageData?.friday || t("openingHours") },
+    { day: t("saturday"), hours: homepageData?.saturday || t("closedHours") },
+    { day: t("sunday"), hours: t("closedHours") },
+  ], [homepageData, t]);
+
+  const fetchHomepageData = useCallback(async () => {
+    if (!mountedRef.current) return;
+
+    try {
+      const cachedData = CacheManager.get(CACHE_KEYS.HOMEPAGE_DATA);
+      if (cachedData) {
+        setHomepageData(cachedData);
+        return;
       }
-    };
-    fetchHomepageData();
+
+      const res = await fetch("/api/homepage", { 
+        next: { revalidate: 300 }
+      });
+
+      if (!res.ok) throw new Error('Homepage fetch failed');
+      
+      const data = await res.json();
+      const footerData = data?.footer || DEFAULT_HOMEPAGE_DATA;
+      
+      if (mountedRef.current) {
+        setHomepageData(footerData);
+        CacheManager.set(CACHE_KEYS.HOMEPAGE_DATA, footerData);
+      }
+    } catch (error) {
+      console.error("Failed to fetch homepage data:", error);
+      
+      // Try to use stale cache as fallback
+      const staleCache = localStorage.getItem(CACHE_KEYS.HOMEPAGE_DATA);
+      if (staleCache) {
+        try {
+          const { data } = JSON.parse(staleCache);
+          if (data && mountedRef.current) {
+            setHomepageData(data);
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse stale homepage cache:', parseError);
+        }
+      }
+    }
   }, []);
 
-  useEffect(() => {
-    const fetchSocialMedia = async () => {
-      try {
-        const res = await fetch("/api/socials");
-        const json = await res.json();
-        if (json.data) {
-          const combinedSocials = json.data.map((social) => {
-            if (social.iconType === "react-icon") {
-              const platformDetails = allSocialPlatforms.find(
-                (p) => p.name === social.iconValue,
-              );
-              return {
-                ...social,
-                color: platformDetails?.color || "from-gray-200 to-gray-300",
-                textColor: platformDetails?.textColor || "text-gray-600",
-              };
-            }
+  const fetchSocialMedia = useCallback(async () => {
+    if (!mountedRef.current) return;
+
+    try {
+      // Check cache first
+      const cachedData = CacheManager.get(CACHE_KEYS.SOCIAL_MEDIA);
+      if (cachedData) {
+        setFetchedSocials(cachedData);
+        return;
+      }
+
+      const res = await fetch("/api/socials");
+
+      if (!res.ok) throw new Error('Socials fetch failed');
+      
+      const json = await res.json();
+
+      if (json.data && mountedRef.current) {
+        const combinedSocials = json.data.map((social) => {
+          if (social.iconType === "react-icon") {
+            const platformDetails = allSocialPlatforms.find(
+              (p) => p.name === social.iconValue,
+            );
             return {
               ...social,
-              color: "from-gray-200 to-gray-300",
-              textColor: "text-gray-600",
+              color: platformDetails?.color || "from-gray-200 to-gray-300",
+              textColor: platformDetails?.textColor || "text-gray-600",
             };
-          });
-          setFetchedSocials(combinedSocials);
+          }
+
+          return {
+            ...social,
+            color: "from-gray-200 to-gray-300",
+            textColor: "text-gray-600",
+          };
+        });
+
+        setFetchedSocials(combinedSocials);
+        CacheManager.set(CACHE_KEYS.SOCIAL_MEDIA, combinedSocials);
+      }
+    } catch (error) {
+      console.error("Failed to fetch social media data:", error);
+      
+      // Try to use stale cache as fallback
+      const staleCache = localStorage.getItem(CACHE_KEYS.SOCIAL_MEDIA);
+      if (staleCache) {
+        try {
+          const { data } = JSON.parse(staleCache);
+          if (data && mountedRef.current) {
+            setFetchedSocials(data);
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse stale socials cache:', parseError);
         }
-      } catch (error) {
-        console.error("Failed to fetch social media data:", error);
       }
-    };
-    fetchSocialMedia();
+    }
   }, []);
 
-  const tradingHours = [
-    {
-      day: t("monday"),
-      hours: homepageData?.monday || t("openingHours"),
-    },
-    {
-      day: t("tuesday"),
-      hours: homepageData?.tuesday || t("openingHours"),
-    },
-    {
-      day: t("wednesday"),
-      hours: homepageData?.wednesday || t("openingHours"),
-    },
-    {
-      day: t("thursday"),
-      hours: homepageData?.thursday || t("openingHours"),
-    },
-    {
-      day: t("friday"),
-      hours: homepageData?.friday || t("openingHours"),
-    },
-    {
-      day: t("saturday"),
-      hours: homepageData?.saturday || t("closedHours"),
-    },
-    { day: t("sunday"), hours: t("closedHours") },
-  ];
+  const fetchSettings = useCallback(async () => {
+    if (!mountedRef.current) return;
 
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch("/api/settings/general", { cache: "no-store" });
-        const data = await res.json();
-        setFooterSettings(data?.settings?.footer || {});
-      } catch (error) {
-        console.error("Failed to fetch footer settings:", error);
+    try {
+      setLogoLoading(true);
+      
+      // Check cache first
+      const cachedData = CacheManager.get(CACHE_KEYS.FOOTER_SETTINGS);
+      if (cachedData) {
+        setFooterSettings(cachedData.footer || DEFAULT_FOOTER_SETTINGS);
+        setLogo(cachedData.logo1 || "");
+        setLogoLoading(false);
+        return;
       }
-    };
-    fetchSettings();
-  }, []);
 
-  useEffect(() => {
-    const fetchLogo = async () => {
-      try {
-        setLogoLoading(true);
-        const res = await fetch("/api/settings/general", { cache: "no-store" });
-        const data = await res.json();
-        setLogo(data?.settings?.logo1);
-      } catch (error) {
-        console.error("Failed to fetch footer Logo:", error);
-      } finally {
+      const res = await fetch("/api/settings/general", { 
+        next: { revalidate: 300 }
+      });
+
+      if (!res.ok) throw new Error('Settings fetch failed');
+      
+      const data = await res.json();
+      
+      if (mountedRef.current) {
+        const settings = data?.settings || {};
+        
+        // Cache the response
+        CacheManager.set(CACHE_KEYS.FOOTER_SETTINGS, settings);
+        
+        setFooterSettings(settings.footer || DEFAULT_FOOTER_SETTINGS);
+        setLogo(settings.logo1 || "");
+      }
+    } catch (error) {
+      console.error("Failed to fetch footer settings:", error);
+      
+      // Try to use stale cache as fallback
+      const staleCache = localStorage.getItem(CACHE_KEYS.FOOTER_SETTINGS);
+      if (staleCache) {
+        try {
+          const { data } = JSON.parse(staleCache);
+          if (data && mountedRef.current) {
+            setFooterSettings(data.footer || DEFAULT_FOOTER_SETTINGS);
+            setLogo(data.logo1 || "");
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse stale settings cache:', parseError);
+        }
+      }
+    } finally {
+      if (mountedRef.current) {
         setLogoLoading(false);
       }
-    };
-    fetchLogo();
+    }
   }, []);
+
+  // Combined data fetch with proper error handling
+  const fetchAllData = useCallback(async () => {
+    const promises = [
+      fetchHomepageData(),
+      fetchSocialMedia(),
+      fetchSettings()
+    ];
+
+    await Promise.allSettled(promises);
+  }, [fetchHomepageData, fetchSocialMedia, fetchSettings]);
+
+  // Effect with proper cleanup and idle callback optimization
+  useEffect(() => {
+    mountedRef.current = true;
+
+    // Use requestIdleCallback for non-critical footer data
+    const scheduleTask = window.requestIdleCallback || ((cb) => setTimeout(cb, 100));
+    const taskId = scheduleTask(() => {
+      fetchAllData();
+    }, { timeout: 5000 });
+
+    return () => {
+      mountedRef.current = false;
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(taskId);
+      } else {
+        clearTimeout(taskId);
+      }
+    };
+  }, [fetchAllData]);
 
   return (
     <div className="relative mt-5">

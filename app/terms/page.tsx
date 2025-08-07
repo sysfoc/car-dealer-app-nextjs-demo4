@@ -1,7 +1,6 @@
 import { headers } from "next/headers"
 import type { Metadata, ResolvingMetadata } from "next"
 
-// Define the type for the fetched data
 interface PageData {
   name: string
   content: string
@@ -56,7 +55,8 @@ const TermsPage = async () => {
         />
         <div className="mt-8 border-t pt-4">
           <p className="text-center text-sm text-gray-500 dark:text-white">
-            © 2025 Your Company Name. All rights reserved.
+            &copy; {new Date().getFullYear()} AutomotiveWebSolutions by Sysfoc. All Rights
+            Reserved.
           </p>
         </div>
       </div>

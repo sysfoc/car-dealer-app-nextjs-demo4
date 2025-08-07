@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -19,63 +19,205 @@ import CarSearchSidebar from "../components/Car-search-sidebar";
 import { useSidebar } from "../context/SidebarContext";
 import Image from "next/image";
 
+const CACHE_DURATION = 5 * 60 * 1000;
+const CACHE_KEY = 'header_settings';
+
+const CacheManager = {
+  get: (key) => {
+    try {
+      if (typeof window === 'undefined') return null;
+      
+      const cached = localStorage.getItem(key);
+      if (!cached) return null;
+      
+      const { data, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+      
+      if (now - timestamp > CACHE_DURATION) {
+        localStorage.removeItem(key);
+        return null;
+      }
+      
+      return data;
+    } catch (error) {
+      console.warn('Cache retrieval failed:', error);
+      return null;
+    }
+  },
+
+  set: (key, data) => {
+    try {
+      if (typeof window === 'undefined') return;
+      
+      const cacheData = {
+        data,
+        timestamp: Date.now()
+      };
+      
+      localStorage.setItem(key, JSON.stringify(cacheData));
+    } catch (error) {
+      console.warn('Cache storage failed:', error);
+    }
+  }
+};
+
+// Static fallback data to prevent loading states
+const DEFAULT_SETTINGS = {
+  hideDarkMode: false,
+  hideFavourite: false,
+  hideLogo: false,
+};
+
 const Header = () => {
   const t = useTranslations("HomePage");
   const [darkMode, setDarkMode] = useState(false);
   const [logo, setLogo] = useState("");
-  const [logoLoading, setLogoLoading] = useState(true);
-  const [topSettings, setTopSettings] = useState({
-    hideDarkMode: false,
-    hideFavourite: false,
-    hideLogo: false,
-  });
+  const [logoError, setLogoError] = useState(false);
+  const [topSettings, setTopSettings] = useState(DEFAULT_SETTINGS);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isSettingsLoaded, setIsSettingsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
+  const mountedRef = useRef(true);
 
   const { isSidebarOpen, toggleSidebar, closeSidebar } = useSidebar();
-  
-  // Optimized: Initialize dark mode synchronously to prevent flash
+
+  const quickLinks = useMemo(() => [
+    { name: "Find Cars", href: "/car-for-sale", icon: FaCar },
+    { name: "Car valuation", href: "/cars/valuation", icon: FaCalculator },
+    { name: "Lease deals", href: "/cars/leasing", icon: FaTags },
+    { name: "Vehicle Services", href: "/cars/about-us", icon: FaHandshake },
+  ], []);
+
+  const mobileMenuLinks = useMemo(() => [
+    ...quickLinks,
+    { name: "Login", href: "/login", icon: FaUser },
+  ], [quickLinks]);
+
   useEffect(() => {
-    // Check localStorage first, then fallback to system preference
+    // Check localStorage first for faster initialization
     const savedTheme = localStorage.getItem('theme');
-    const systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const shouldBeDark = savedTheme === 'dark' || (!savedTheme && document.documentElement.classList.contains("dark")) || (!savedTheme && systemDark);
+    const isDark = savedTheme === 'dark' || 
+      (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
     
-    setDarkMode(shouldBeDark);
-    document.documentElement.classList.toggle('dark', shouldBeDark);
+    setDarkMode(isDark);
+    
+    // Apply immediately to prevent flash
+    if (isDark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, []);
 
-  // Separate logo and settings fetch
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        setLogoLoading(true);
-        const response = await fetch("/api/settings/general", { cache: "no-store" });
-        const data = await response.json();
-        if (data?.settings?.logo1) {
-          setLogo(data?.settings?.logo1);
+  // Enhanced settings fetch with cache integration
+  const fetchSettings = useCallback(async () => {
+    if (!mountedRef.current) return;
+
+    try {
+      setIsLoading(true);
+      
+      // Check cache first
+      const cachedData = CacheManager.get(CACHE_KEY);
+      if (cachedData) {
+        setLogo(cachedData?.settings?.logo1 || "");
+        setTopSettings({
+          ...DEFAULT_SETTINGS,
+          ...cachedData?.settings?.top,
+        });
+        setIsSettingsLoaded(true);
+        setIsLoading(false);
+        return;
+      }
+
+      // If no cache, make API request
+      const response = await fetch("/api/settings/general", {
+        next: { revalidate: 600 },
+      });
+
+      if (!response.ok) {
+        throw new Error('Settings fetch failed');
+      }
+
+      const data = await response.json();
+
+      if (!mountedRef.current) return;
+
+      // Cache the response
+      CacheManager.set(CACHE_KEY, data);
+
+      const updates = {
+        logo: data?.settings?.logo1 || "",
+        settings: {
+          ...DEFAULT_SETTINGS,
+          ...data?.settings?.top,
         }
-        setTopSettings((prev) => ({
-          hideDarkMode: false,
-          hideFavourite: false,
-          hideLogo: false,
-          ...data.settings?.top,
-        }));
-      } catch (error) {
-        console.error("Failed to fetch settings:", error);
-      } finally {
-        setLogoLoading(false);
+      };
+
+      setLogo(updates.logo);
+      setTopSettings(updates.settings);
+      setIsSettingsLoaded(true);
+      
+    } catch (error) {
+      console.error("Failed to fetch settings:", error);
+      
+      // Try to use stale cache as fallback
+      const staleCache = localStorage.getItem(CACHE_KEY);
+      if (staleCache) {
+        try {
+          const { data } = JSON.parse(staleCache);
+          if (data?.settings) {
+            setLogo(data.settings.logo1 || "");
+            setTopSettings({
+              ...DEFAULT_SETTINGS,
+              ...data.settings.top,
+            });
+          }
+        } catch (parseError) {
+          console.warn('Failed to parse stale cache data:', parseError);
+        }
+      }
+      
+      // Silently fall back to defaults
+      setIsSettingsLoaded(true);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    
+    // Use requestIdleCallback for non-critical settings
+    const scheduleTask = window.requestIdleCallback || ((cb) => setTimeout(cb, 1));
+    const taskId = scheduleTask(() => {
+      fetchSettings();
+    }, { timeout: 3000 });
+    
+    return () => {
+      mountedRef.current = false;
+      if (window.cancelIdleCallback) {
+        window.cancelIdleCallback(taskId);
+      } else {
+        clearTimeout(taskId);
       }
     };
-    fetchSettings(); // Call immediately
-  }, []);
+  }, [fetchSettings]);
 
-  // Optimized: Memoized callbacks
+  // Optimized dark mode toggle with persistence
   const toggleDarkMode = useCallback(() => {
     const newDarkMode = !darkMode;
     setDarkMode(newDarkMode);
-    document.documentElement.classList.toggle("dark", newDarkMode);
+    
+    // Persist preference
     localStorage.setItem('theme', newDarkMode ? 'dark' : 'light');
+    
+    // Apply immediately
+    if (newDarkMode) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
   }, [darkMode]);
 
   const toggleSearchSidebar = useCallback(() => {
@@ -98,64 +240,30 @@ const Header = () => {
     router.push("/liked-cars");
   }, [router]);
 
-  // Optimized: Memoized quick links to prevent recreation on every render
-  const quickLinks = useMemo(() => [
-    { name: "Find Cars", href: "/car-for-sale", icon: FaCar },
-    { name: "Car valuation", href: "/cars/valuation", icon: FaCalculator },
-    { name: "Lease deals", href: "/cars/leasing", icon: FaTags },
-    { name: "Vehicle Services", href: "/cars/about-us", icon: FaHandshake },
-  ], []);
+  const handleLogoError = useCallback(() => {
+    setLogoError(true);
+    setLogo("");
+  }, []);
 
-  const mobileMenuLinks = useMemo(() => [
-    ...quickLinks,
-    { name: "Login", href: "/login", icon: FaUser },
-  ], [quickLinks]);
-
-  // Optimized: Memoized logo skeleton component
+  // Optimized skeleton without animations to prevent CLS
   const LogoSkeleton = useMemo(() => (
-    <div className="flex items-center space-x-3">
-      <div className="h-12 w-12 animate-pulse rounded-lg bg-gray-200 dark:bg-gray-700"></div>
-      <div className="flex flex-col space-y-2">
-        <div className="h-5 w-24 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
-        <div className="h-3 w-32 animate-pulse rounded bg-gray-200 dark:bg-gray-700"></div>
+    <div className="flex items-center space-x-3" style={{ height: '48px', width: '200px' }}>
+      <div className="h-12 w-12 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+      <div className="flex flex-col space-y-1">
+        <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700"></div>
+        <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
       </div>
     </div>
   ), []);
 
-  // Optimized: Memoized logo component
+  // Memoized logo component with fixed dimensions
   const LogoComponent = useMemo(() => {
     if (topSettings.hideLogo) return null;
 
-    if (logoLoading) {
-      return LogoSkeleton;
-    }
+    if (!isSettingsLoaded) return LogoSkeleton;
 
-    if (logo) {
-      return (
-        <Link href="/" className="flex items-center space-x-3 group">
-          <Image
-            src={logo}
-            alt="Logo"
-            width={64}
-            height={64}
-            className="h-16 w-16 object-contain"
-            priority={true}
-            onError={() => setLogo("")}
-          />
-          <div className="flex flex-col">
-            <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
-              WindScreen
-            </span>
-            <span className="text-xs font-medium text-gray-600 group-hover:text-red-600 transition-colors duration-300 dark:text-gray-400 dark:group-hover:text-red-400">
-              Built to Sell Cars
-            </span>
-          </div>
-        </Link>
-      );
-    }
-
-    return (
-      <Link href="/" className="flex items-center space-x-3 group">
+    const logoContent = (
+      <div className="flex items-center space-x-3">
         <div className="flex flex-col">
           <span className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-bold tracking-tight text-transparent dark:from-white dark:via-red-400 dark:to-white">
             WindScreen
@@ -164,9 +272,34 @@ const Header = () => {
             Built to Sell Cars
           </span>
         </div>
+      </div>
+    );
+
+    return (
+      <Link href="/" className="flex items-center space-x-3 group">
+        <div style={{ minHeight: '48px', display: 'flex', alignItems: 'center' }}>
+          {logo && !logoError ? (
+            <>
+              <div style={{ width: '64px', height: '64px', position: 'relative' }}>
+                <Image
+                  src={logo}
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  onError={handleLogoError}
+                  priority
+                  sizes="64px"
+                />
+              </div>
+              {logoContent}
+            </>
+          ) : (
+            logoContent
+          )}
+        </div>
       </Link>
     );
-  }, [topSettings.hideLogo, logoLoading, logo, LogoSkeleton]);
+  }, [topSettings.hideLogo, isSettingsLoaded, logo, logoError, LogoSkeleton, handleLogoError]);
 
   return (
     <>
@@ -195,7 +328,7 @@ const Header = () => {
               <button
                 onClick={navigateToLogin}
                 aria-label="Login"
-                className="hidden items-center space-x-2 rounded-xl bg-gray-100 px-4 py-3 text-gray-600 transition-all duration-300 hover:scale-105 hover:bg-gray-200 hover:text-red-600 focus:outline-none focus:ring-0 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-red-600 lg:flex"
+                className={`hidden items-center space-x-2 rounded-xl bg-gray-100 px-4 py-3 text-gray-600 transition-all duration-300 hover:scale-105 hover:bg-gray-200 hover:text-red-600 focus:outline-none focus:ring-0 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700 dark:hover:text-red-600 lg:flex ${isLoading ? 'opacity-75' : 'opacity-100'}`}
               >
                 <FaUser className="h-5 w-5" />
                 <span className="text-sm font-medium">Login</span>
@@ -234,7 +367,7 @@ const Header = () => {
                 <button
                   onClick={navigateToLikedCars}
                   aria-label="Liked Cars"
-                  className="group relative hidden rounded-xl bg-gray-100 p-3 transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:shadow-lg hover:shadow-red-500/25 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-white md:flex dark:bg-gray-800 dark:focus:ring-offset-gray-900"
+                  className={`group relative hidden rounded-xl bg-gray-100 p-3 transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:shadow-lg hover:shadow-red-500/25 focus:outline-none focus:ring-2 focus:ring-red-500/50 focus:ring-offset-2 focus:ring-offset-white md:flex dark:bg-gray-800 dark:focus:ring-offset-gray-900 ${isLoading ? 'opacity-75' : 'opacity-100'}`}
                 >
                   <FaHeart className="h-5 w-5 text-gray-700 transition-colors duration-300 group-hover:text-white dark:text-gray-300" />
                 </button>
@@ -244,7 +377,7 @@ const Header = () => {
                 {!topSettings.hideDarkMode && (
                   <button
                     onClick={toggleDarkMode}
-                    className="group relative rounded-xl bg-gray-100 p-3 text-gray-700 ring-1 ring-gray-200 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:ring-red-500/50 hover:shadow-lg hover:shadow-red-500/25 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700"
+                    className={`group relative rounded-xl bg-gray-100 p-3 text-gray-700 ring-1 ring-gray-200 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:ring-red-500/50 hover:shadow-lg hover:shadow-red-500/25 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700 ${isLoading ? 'opacity-75' : 'opacity-100'}`}
                     aria-label="Toggle dark mode"
                   >
                     {darkMode ? (
@@ -260,7 +393,7 @@ const Header = () => {
                 {!topSettings.hideDarkMode && (
                   <button
                     onClick={toggleDarkMode}
-                    className="group rounded-xl bg-gray-100 p-3 text-gray-700 ring-1 ring-gray-200 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:ring-red-500/50 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700"
+                    className={`group rounded-xl bg-gray-100 p-3 text-gray-700 ring-1 ring-gray-200 backdrop-blur-sm transition-all duration-300 hover:scale-105 hover:bg-gradient-to-br hover:from-red-500 hover:to-red-600 hover:ring-red-500/50 hover:text-white dark:bg-gray-800 dark:text-gray-300 dark:ring-gray-700 ${isLoading ? 'opacity-75' : 'opacity-100'}`}
                     aria-label="Toggle dark mode"
                   >
                     {darkMode ? (
@@ -279,16 +412,20 @@ const Header = () => {
       {/* Mobile Quick Links Menu Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm transition-opacity duration-300"
+          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
           onClick={handleMobileMenuClose}
+          style={{ transform: 'translate3d(0, 0, 0)' }}
         />
       )}
       
       {/* Mobile Quick Links Menu */}
       <div
-        className={`fixed left-0 top-0 z-[60] h-full w-full max-w-xs transform overflow-y-auto bg-white shadow-2xl transition-transform duration-300 dark:bg-gray-900 ${
-          isMobileMenuOpen ? "translate-x-0" : "-translate-x-full"
-        } scrollbar-hide lg:hidden border-r border-gray-200 dark:border-gray-700`}
+        className={`fixed left-0 top-0 z-[60] h-full w-full max-w-xs transform overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 scrollbar-hide lg:hidden border-r border-gray-200 dark:border-gray-700`}
+        style={{ 
+          transform: isMobileMenuOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
+          transition: 'transform 0.2s ease-out',
+          willChange: 'transform'
+        }}
       >
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">

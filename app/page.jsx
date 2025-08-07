@@ -30,7 +30,6 @@ export default function Home() {
       </MainLayout>
       <VehicalsList loadingState={loading} />
       <BrowseCars />
-      {/* <Services /> */}
       <Blog />
     </div>
   )

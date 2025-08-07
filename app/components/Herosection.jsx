@@ -3,39 +3,222 @@ import Image from "next/image";
 import { FaArrowRight, FaCar, FaCheckCircle } from "react-icons/fa";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useState, useEffect, useMemo, useCallback } from "react";
+import { useState, useEffect, useMemo, useCallback, useDeferredValue } from "react";
+import axios from "axios";
+
+const FALLBACK_HEADING = "Premium Automotive Platform Built for Dealers";
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes in milliseconds
+const CACHE_KEY = "homepage_data";
+
+// Cache utilities
+const CacheManager = {
+  get: (key) => {
+    try {
+      if (typeof window === "undefined") return null;
+
+      const cached = localStorage.getItem(key);
+      if (!cached) return null;
+
+      const { data, timestamp } = JSON.parse(cached);
+      const now = Date.now();
+
+      if (now - timestamp > CACHE_DURATION) {
+        localStorage.removeItem(key);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.warn("Cache retrieval failed:", error);
+      return null;
+    }
+  },
+
+  set: (key, data) => {
+    try {
+      if (typeof window === "undefined") return;
+
+      const cacheData = {
+        data,
+        timestamp: Date.now(),
+      };
+
+      localStorage.setItem(key, JSON.stringify(cacheData));
+    } catch (error) {
+      console.warn("Cache storage failed:", error);
+    }
+  },
+
+  clear: (key) => {
+    try {
+      if (typeof window === "undefined") return;
+      localStorage.removeItem(key);
+    } catch (error) {
+      console.warn("Cache clear failed:", error);
+    }
+  },
+};
+
+// Axios instance with caching configuration
+const apiClient = axios.create({
+  timeout: 10000,
+  headers: {
+    "Content-Type": "application/json",
+    "Cache-Control": "public, max-age=3600", // 1 hour cache
+  },
+});
+
+// Add request interceptor for cache checking
+apiClient.interceptors.request.use((config) => {
+  const cachedData = CacheManager.get(CACHE_KEY);
+  if (cachedData && config.url?.includes("/api/homepage")) {
+    // Return cached data as a resolved promise
+    config.adapter = () =>
+      Promise.resolve({
+        data: cachedData,
+        status: 200,
+        statusText: "OK",
+        headers: {},
+        config,
+        request: {},
+      });
+  }
+  return config;
+});
+
+// Add response interceptor for caching
+apiClient.interceptors.response.use(
+  (response) => {
+    // Cache successful API responses
+    if (
+      response.config.url?.includes("/api/homepage") &&
+      response.status === 200
+    ) {
+      CacheManager.set(CACHE_KEY, response.data);
+    }
+    return response;
+  },
+  (error) => {
+    console.error("API request failed:", error.message);
+    return Promise.reject(error);
+  },
+);
 
 const HeroSection = () => {
   const t = useTranslations("HomePage");
   const router = useRouter();
-  const [headingData, setHeadingData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [isContentVisible, setIsContentVisible] = useState(false);
+  const [headingData, setHeadingData] = useState(FALLBACK_HEADING);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [isContentVisible, setIsContentVisible] = useState(true);
+  const [imageCached, setImageCached] = useState(false);
+
+  const deferredHeading = useDeferredValue(headingData);
 
   const heroImage = "/abc1.webp";
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const response = await fetch("/api/homepage", {next: { revalidate: 3600 }});
-        const result = await response.json();
-        if (response.ok) {
-          setHeadingData(result.searchSection?.mainHeading);
+  // Enhanced data fetching with proper error handling and caching
+  const fetchHomepageData = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      // Check cache first
+      const cachedData = CacheManager.get(CACHE_KEY);
+      if (cachedData?.searchSection?.mainHeading) {
+        setHeadingData(cachedData.searchSection.mainHeading);
+        setIsLoading(false);
+        return;
+      }
+
+      const response = await apiClient.get("/api/homepage", {
+        params: {
+          timestamp: Date.now(), // Prevent browser caching conflicts
+        },
+      });
+
+      if (
+        response.data?.searchSection?.mainHeading &&
+        response.data.searchSection.mainHeading !== FALLBACK_HEADING
+      ) {
+        setHeadingData(response.data.searchSection.mainHeading);
+      }
+    } catch (error) {
+      console.error("Error fetching homepage data:", error);
+      setError(error.message);
+
+      // Try to use stale cache data as fallback
+      const staleCache = localStorage.getItem(CACHE_KEY);
+      if (staleCache) {
+        try {
+          const { data } = JSON.parse(staleCache);
+          if (data?.searchSection?.mainHeading) {
+            setHeadingData(data.searchSection.mainHeading);
+          }
+        } catch (parseError) {
+          console.warn("Failed to parse stale cache data:", parseError);
         }
-      } catch (error) {
-        console.error("Error fetching homepage data:", error);
-      } finally {
-        setLoading(false);
-        requestAnimationFrame(() => {
-          requestAnimationFrame(() => {
-            setIsContentVisible(true);
-          });
-        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  // Image caching and optimization utilities
+  const preloadAndCacheImage = useCallback(async (src) => {
+    return new Promise((resolve, reject) => {
+      const img = new window.Image();
+
+      img.onload = () => {
+        setImageCached(true);
+        resolve(img);
+      };
+
+      img.onerror = () => {
+        reject(new Error(`Failed to load image: ${src}`));
+      };
+
+      img.crossOrigin = "anonymous";
+      img.src = src;
+    });
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let timeoutId;
+
+    const initializeData = async () => {
+      if (!isMounted) return;
+
+      // Use requestIdleCallback for better performance
+      if (typeof window !== "undefined" && "requestIdleCallback" in window) {
+        requestIdleCallback(
+          () => {
+            if (isMounted) {
+              timeoutId = setTimeout(() => fetchHomepageData(), 150);
+            }
+          },
+          { timeout: 5000 },
+        );
+      } else {
+        timeoutId = setTimeout(() => fetchHomepageData(), 300);
       }
     };
 
-    fetchData();
-  }, []);
+    initializeData();
+
+    // Preload hero image for better caching
+    if (typeof window !== "undefined") {
+      preloadAndCacheImage(heroImage).catch(console.warn);
+    }
+
+    return () => {
+      isMounted = false;
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [fetchHomepageData, preloadAndCacheImage, heroImage]);
 
   const features = useMemo(() => [
     "Premium Vehicle Selection",
@@ -52,7 +235,7 @@ const HeroSection = () => {
   }, [router]);
 
   const splitHeadingAfterTwoWords = useCallback((text) => {
-    if (!text) return null;
+    if (!text) return [{ text: FALLBACK_HEADING, style: "normal" }];
 
     const words = text.split(" ");
     if (words.length <= 2) {
@@ -99,29 +282,32 @@ const HeroSection = () => {
 
   const getResponsiveTextSize = useCallback((text) => {
     if (!text) return "text-4xl sm:text-5xl lg:text-6xl";
+
     const length = text.length;
     if (length < 40) return "text-4xl sm:text-5xl lg:text-6xl xl:text-7xl";
     if (length < 80) return "text-3xl sm:text-4xl lg:text-5xl xl:text-6xl";
     return "text-2xl sm:text-3xl lg:text-4xl xl:text-5xl";
   }, []);
 
+  const textParts = useMemo(
+    () => splitHeadingAfterTwoWords(deferredHeading),
+    [deferredHeading, splitHeadingAfterTwoWords],
+  );
+
+  const textSizeClass = useMemo(
+    () => getResponsiveTextSize(deferredHeading),
+    [deferredHeading, getResponsiveTextSize],
+  );
+
   const processedHeading = useMemo(() => {
-    if (!headingData) return null;
-
-    const parts = splitHeadingAfterTwoWords(
-      typeof headingData === "string" ? headingData : String(headingData),
-    );
-
-    const textSizeClass = getResponsiveTextSize(
-      typeof headingData === "string" ? headingData : String(headingData),
-    );
+    if (!headingData && !isLoading) return null;
 
     return (
-      <h1 className={`font-bold leading-tight ${textSizeClass}`}>
-        {renderStyledParts(parts)}
+      <h1 className={`font-bold leading-tight ${textSizeClass} ${isLoading ? "opacity-75" : "opacity-100"}`}>
+        {renderStyledParts(textParts)}
       </h1>
     );
-  }, [headingData, splitHeadingAfterTwoWords, getResponsiveTextSize, renderStyledParts]);
+  }, [headingData, isLoading, textSizeClass, renderStyledParts, textParts]);
 
   const HeadingSkeleton = useMemo(() => (
     <div className="w-full max-w-4xl space-y-4">
@@ -168,7 +354,7 @@ const HeroSection = () => {
               </div>
 
               <div className="space-y-6">
-                {loading ? (
+                {isLoading ? (
                   HeadingSkeleton
                 ) : (
                   processedHeading || (
@@ -190,7 +376,6 @@ const HeroSection = () => {
                     className={`flex items-center space-x-3 transition-all duration-700 ${
                       isContentVisible ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4'
                     }`}
-                    style={{ transitionDelay: `${(index + 1) * 200}ms` }}
                   >
                     <FaCheckCircle className="h-5 w-5 text-red-400 drop-shadow-sm" />
                     <span className="text-gray-200 font-medium drop-shadow-sm">
@@ -203,7 +388,7 @@ const HeroSection = () => {
 
             <div className={`lg:col-span-5 xl:col-span-6 flex flex-col items-center justify-center space-y-6 lg:items-end transition-all duration-1000 ${
               isContentVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
-            }`} style={{ transitionDelay: '800ms' }}>
+            }`}>
               
               <div className="flex flex-col gap-4 w-full max-w-sm lg:max-w-none">
                 <button
@@ -244,7 +429,7 @@ const HeroSection = () => {
         </div>
       </div>
       <div className="absolute bottom-10 left-10 h-20 w-20 rounded-full bg-red-500/20 backdrop-blur-sm opacity-60 animate-pulse"></div>
-      <div className="absolute top-20 right-20 h-16 w-16 rounded-full bg-red-400/20 backdrop-blur-sm opacity-40 animate-pulse" style={{ animationDelay: '1s' }}></div>
+      <div className="absolute top-20 right-20 h-16 w-16 rounded-full bg-red-400/20 backdrop-blur-sm opacity-40 animate-pulse"></div>
       
       <div className="absolute inset-0 opacity-5 z-5">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_1px_1px,rgb(255,255,255)_1px,transparent_0)] bg-[size:50px_50px]"></div>
