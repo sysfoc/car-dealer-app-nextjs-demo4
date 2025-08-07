@@ -115,7 +115,7 @@ export default async function RootLayout({
   }
   return (
     <html lang={locale}>
-      <body className={`transition-all dark:bg-gray-800 dark:text-gray-200 ${poppins.className}`}>
+      <body className={`dark:bg-gray-800 dark:text-gray-200 ${poppins.className}`}>
         <SidebarProvider>
         <ThemeModeScript />
         <GoogleAnalytics />
