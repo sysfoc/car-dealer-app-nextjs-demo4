@@ -27,7 +27,7 @@ const PageEditor = () => {
     const fetchData = async () => {
       setIsLoading(true)
       try {
-        const res = await fetch(`/api/pages?type=${type}`, { cache: "no-store" })
+        const res = await fetch(`/api/pages?type=${type}`, { next: { revalidate: 3600 } })
         const result = await res.json()
         if (result?.data) {
           setFormData({
