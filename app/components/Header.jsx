@@ -18,6 +18,7 @@ import { useTranslations } from "next-intl";
 import CarSearchSidebar from "../components/Car-search-sidebar";
 import { useSidebar } from "../context/SidebarContext";
 import Image from "next/image";
+import Banner from "./Banner"
 
 const CACHE_DURATION = 5 * 60 * 1000;
 const CACHE_KEY = 'header_settings';
@@ -304,6 +305,7 @@ const Header = () => {
   return (
     <>
       <nav className="fixed left-0 right-0 top-0 z-50 bg-white shadow-lg backdrop-blur-lg transition-all duration-300 border-b border-gray-200 dark:bg-gray-900 dark:border-gray-700">
+        <Banner/>
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-4">
           <div className="flex h-16 items-center justify-between">
             {LogoComponent}

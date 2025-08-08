@@ -341,7 +341,7 @@ const HeroSection = () => {
       </div>
 
       <div className="relative z-10 mx-auto min-h-screen max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="flex min-h-screen items-center py-16">
+        <div className="flex min-h-screen items-center py-16 mt-6">
           <div className="grid w-full grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-16">
             
             <div className={`lg:col-span-7 xl:col-span-6 space-y-8 lg:space-y-10 transition-all duration-1000 ${
