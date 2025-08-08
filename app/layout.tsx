@@ -28,7 +28,7 @@ const getGeneralSettings = async () => {
   try {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}` : "http://localhost:3000"
     const res = await fetch(`${baseUrl}/api/settings/general`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 0 },
     })
     if (!res.ok) {
       console.error(`Failed to fetch settings: ${res.status}`)
