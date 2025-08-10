@@ -200,7 +200,7 @@ export default function Home() {
 
   if (!slug) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] mt-24 items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-semibold text-app-text dark:text-gray-200">
             Sorry! No Car Found
@@ -215,7 +215,7 @@ export default function Home() {
 
   if (error) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] mt-24 items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-semibold text-red-600 dark:text-red-400">
             An Error Occurred While Searching
@@ -231,7 +231,7 @@ export default function Home() {
   if (!car && !loading) {
     // Added !loading to ensure it's not just loading
     return (
-      <div className="flex min-h-[50vh] items-center justify-center">
+      <div className="flex min-h-[50vh] mt-24 items-center justify-center">
         <div className="text-center">
           <h2 className="mb-2 text-2xl font-semibold text-app-text dark:text-gray-200">
             No Car Found
@@ -246,7 +246,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center">
+      <div className="flex min-h-[400px] mt-24 items-center justify-center">
         <div className="flex items-center space-x-4 rounded-2xl border border-slate-200 bg-white px-8 py-6 shadow-2xl dark:border-gray-700 dark:bg-gray-800">
           <Spinner
             aria-label="Loading car details"
@@ -267,7 +267,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen bg-gray-50 mt-32 dark:bg-gray-900">
       <div className="mx-auto mt-16 max-w-7xl px-1 py-6 sm:px-6 lg:px-8">
         {/* Header Section */}
         <div className="mb-6 overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm dark:border-gray-700 dark:bg-gray-800">
