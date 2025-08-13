@@ -1,7 +1,6 @@
 "use client";
 import Image from "next/image";
 import { FaArrowRight, FaCar, FaCheckCircle } from "react-icons/fa";
-import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useState, useEffect, useMemo, useCallback, useDeferredValue } from "react";
 import axios from "axios";
@@ -105,7 +104,6 @@ apiClient.interceptors.response.use(
 );
 
 const HeroSection = () => {
-  const t = useTranslations("HomePage");
   const router = useRouter();
   const [headingData, setHeadingData] = useState(FALLBACK_HEADING);
   const [isLoading, setIsLoading] = useState(false);

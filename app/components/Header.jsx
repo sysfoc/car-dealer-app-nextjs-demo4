@@ -14,7 +14,6 @@ import {
   FaTags,
   FaUser,
 } from "react-icons/fa";
-import { useTranslations } from "next-intl";
 import CarSearchSidebar from "../components/Car-search-sidebar";
 import { useSidebar } from "../context/SidebarContext";
 import Image from "next/image";
@@ -70,7 +69,6 @@ const DEFAULT_SETTINGS = {
 };
 
 const Header = () => {
-  const t = useTranslations("HomePage");
   const [darkMode, setDarkMode] = useState(false);
   const [logo, setLogo] = useState("");
   const [logoError, setLogoError] = useState(false);

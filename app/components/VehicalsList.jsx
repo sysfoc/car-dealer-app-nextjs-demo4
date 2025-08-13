@@ -145,7 +145,7 @@ const VehicleCard = ({
   );
 };
 
-const VehicalsList = ({ loadingState }) => {
+const VehicalsList = () => {
   const t = useTranslations("HomePage");
   const [vehicles, setVehicles] = useState([]);
   const [loading, setIsLoading] = useState(true);
