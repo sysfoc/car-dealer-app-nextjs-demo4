@@ -246,8 +246,8 @@ const Header = () => {
 
   // Optimized skeleton without animations to prevent CLS
   const LogoSkeleton = useMemo(() => (
-    <div className="flex items-center space-x-3" style={{ height: '48px', width: '200px' }}>
-      <div className="h-12 w-12 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
+   <div className="flex items-center space-x-3 ultraH48W200">
+ <div className="h-12 w-12 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
       <div className="flex flex-col space-y-1">
         <div className="h-4 w-20 rounded bg-gray-200 dark:bg-gray-700"></div>
         <div className="h-3 w-24 rounded bg-gray-200 dark:bg-gray-700"></div>
@@ -276,11 +276,11 @@ const Header = () => {
 
     return (
       <Link href="/" className="flex items-center space-x-3 group">
-        <div style={{ minHeight: '48px', display: 'flex', alignItems: 'center' }}>
-          {logo && !logoError ? (
+      <div className="flex items-center minH48Unique">
+  {logo && !logoError ? (
             <>
-              <div style={{ width: '64px', height: '64px', position: 'relative' }}>
-                <Image
+            <div className="w64h64Unique relative">
+  <Image
                   src={logo}
                   alt="Logo"
                   fill
@@ -412,21 +412,19 @@ const Header = () => {
       {/* Mobile Quick Links Menu Overlay */}
       {isMobileMenuOpen && (
         <div
-          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
-          onClick={handleMobileMenuClose}
-          style={{ transform: 'translate3d(0, 0, 0)' }}
-        />
+  className="mobileMenuOverlay fixed inset-0 z-[60] bg-black/60 backdrop-blur-sm"
+  onClick={handleMobileMenuClose}
+/>
+
       )}
       
       {/* Mobile Quick Links Menu */}
-      <div
-        className={`fixed left-0 top-0 z-[60] h-full w-full max-w-xs transform overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 scrollbar-hide lg:hidden border-r border-gray-200 dark:border-gray-700`}
-        style={{ 
-          transform: isMobileMenuOpen ? 'translate3d(0, 0, 0)' : 'translate3d(-100%, 0, 0)',
-          transition: 'transform 0.2s ease-out',
-          willChange: 'transform'
-        }}
-      >
+     <div
+  className={`mobileMenuDrawer fixed left-0 top-0 z-[60] h-full w-full max-w-xs overflow-y-auto bg-white shadow-2xl dark:bg-gray-900 scrollbar-hide lg:hidden border-r border-gray-200 dark:border-gray-700 ${
+    isMobileMenuOpen ? "menuOpen" : "menuClosed"
+  }`}
+>
+
         <div className="flex h-full flex-col">
           <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-gray-50 to-white p-4 dark:border-gray-700 dark:from-gray-800 dark:to-gray-900">
             <h2 className="bg-gradient-to-r from-gray-800 via-red-600 to-gray-800 bg-clip-text text-lg font-semibold text-transparent dark:from-white dark:via-red-400 dark:to-gray-200">

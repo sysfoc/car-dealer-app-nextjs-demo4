@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { useState, useEffect, useId } from "react"
-import { useRouter } from "next/navigation"
-import { useTranslations } from "next-intl"
-import { FaSearch, FaTimes, FaTags } from "react-icons/fa"
-import { useSidebar } from "../context/SidebarContext"
+import { useState, useEffect, useId } from "react";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
+import { FaSearch, FaTimes, FaTags } from "react-icons/fa";
+import { useSidebar } from "../context/SidebarContext";
 
 const isLightColor = (colorId) => {
-  const lightColors = ["white", "yellow", "beige", "silver"]
-  return lightColors.includes(colorId)
-}
+  const lightColors = ["white", "yellow", "beige", "silver"];
+  return lightColors.includes(colorId);
+};
 
 const colorMap = {
   black: "#000000",
@@ -19,7 +19,7 @@ const colorMap = {
   silver: "#c0c0c0",
   red: "#ef4444",
   green: "#22c55e",
-}
+};
 
 const ConditionButton = ({ condition, selected, onClick }) => {
   return (
@@ -33,68 +33,76 @@ const ConditionButton = ({ condition, selected, onClick }) => {
     >
       {condition === "new" ? "New" : "Used"}
     </button>
-  )
-}
+  );
+};
 
 const CarSearchSidebar = () => {
-  const t = useTranslations("HomePage")
-  const { isSidebarOpen, closeSidebar } = useSidebar() // Use context
-  
-  const [makes, setMakes] = useState([])
-  const [models, setModels] = useState([])
-  const [selectedMake, setSelectedMake] = useState("")
-  const [selectedModel, setSelectedModel] = useState("")
-  const [minPrice, setMinPrice] = useState(100)
-  const [maxPrice, setMaxPrice] = useState(100000)
-  const [selectedColors, setSelectedColors] = useState([])
-  const [selectedConditions, setSelectedConditions] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [searchLoading, setSearchLoading] = useState(false)
-  const [jsonData, setJsonData] = useState(null)
-  const router = useRouter()
+  const t = useTranslations("HomePage");
+  const { isSidebarOpen, closeSidebar } = useSidebar(); // Use context
+
+  const [makes, setMakes] = useState([]);
+  const [models, setModels] = useState([]);
+  const [selectedMake, setSelectedMake] = useState("");
+  const [selectedModel, setSelectedModel] = useState("");
+  const [minPrice, setMinPrice] = useState(100);
+  const [maxPrice, setMaxPrice] = useState(100000);
+  const [selectedColors, setSelectedColors] = useState([]);
+  const [selectedConditions, setSelectedConditions] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [jsonData, setJsonData] = useState(null);
+  const router = useRouter();
   const idPrefix = useId();
 
   useEffect(() => {
     const fetchJsonData = async () => {
       try {
-        setLoading(true)
-        const response = await fetch("/Vehicle make and model data (2).json")
-        const data = await response.json()
-        setJsonData(data.Sheet1)
+        setLoading(true);
+        const response = await fetch("/Vehicle make and model data (2).json");
+        const data = await response.json();
+        setJsonData(data.Sheet1);
         // Extract unique makes
-        const uniqueMakes = [...new Set(data.Sheet1.map((item) => item.Maker))]
-        setMakes(uniqueMakes)
+        const uniqueMakes = [...new Set(data.Sheet1.map((item) => item.Maker))];
+        setMakes(uniqueMakes);
       } catch (error) {
-        console.error("Error loading vehicle data:", error)
+        console.error("Error loading vehicle data:", error);
       } finally {
-        setLoading(false)
+        setLoading(false);
       }
-    }
-    fetchJsonData()
-  }, [])
+    };
+    fetchJsonData();
+  }, []);
 
   useEffect(() => {
     if (selectedMake && jsonData) {
-      const makeData = jsonData.find((item) => item.Maker === selectedMake)
+      const makeData = jsonData.find((item) => item.Maker === selectedMake);
       if (makeData && makeData["model "]) {
-        const modelArray = makeData["model "].split(",").map((model) => model.trim())
-        setModels(modelArray)
+        const modelArray = makeData["model "]
+          .split(",")
+          .map((model) => model.trim());
+        setModels(modelArray);
       } else {
-        setModels([])
+        setModels([]);
       }
-      setSelectedModel("")
+      setSelectedModel("");
     }
-  }, [selectedMake, jsonData])
+  }, [selectedMake, jsonData]);
 
   const handleColorSelection = (colorId) => {
-    setSelectedColors((prev) => (prev.includes(colorId) ? prev.filter((c) => c !== colorId) : [...prev, colorId]))
-  }
+    setSelectedColors((prev) =>
+      prev.includes(colorId)
+        ? prev.filter((c) => c !== colorId)
+        : [...prev, colorId],
+    );
+  };
 
   const handleConditionSelection = (condition) => {
     setSelectedConditions((prev) =>
-      prev.includes(condition) ? prev.filter((c) => c !== condition) : [...prev, condition],
-    )
-  }
+      prev.includes(condition)
+        ? prev.filter((c) => c !== condition)
+        : [...prev, condition],
+    );
+  };
 
   const handleSearch = async () => {
     if (
@@ -104,52 +112,100 @@ const CarSearchSidebar = () => {
       selectedColors.length === 0 &&
       selectedConditions.length === 0
     ) {
-      alert("Please select at least one search criterion (Make, Price Range, Color, or Condition).")
-      return
+      alert(
+        "Please select at least one search criterion (Make, Price Range, Color, or Condition).",
+      );
+      return;
     }
-    setSearchLoading(true)
+    setSearchLoading(true);
     try {
-      const queryParams = []
+      const queryParams = [];
       if (selectedMake) {
-        queryParams.push(`make=${encodeURIComponent(selectedMake)}`)
+        queryParams.push(`make=${encodeURIComponent(selectedMake)}`);
       }
       if (selectedModel) {
-        queryParams.push(`model=${encodeURIComponent(selectedModel)}`)
+        queryParams.push(`model=${encodeURIComponent(selectedModel)}`);
       }
       if (minPrice !== 100 || maxPrice !== 100000) {
-        queryParams.push(`minPrice=${minPrice}`)
-        queryParams.push(`maxPrice=${maxPrice}`)
+        queryParams.push(`minPrice=${minPrice}`);
+        queryParams.push(`maxPrice=${maxPrice}`);
       }
       if (selectedColors.length > 0) {
         selectedColors.forEach((color) => {
-          queryParams.push(`color=${encodeURIComponent(color)}`)
-        })
+          queryParams.push(`color=${encodeURIComponent(color)}`);
+        });
       }
       if (selectedConditions.length > 0) {
         selectedConditions.forEach((condition) => {
-          queryParams.push(`condition=${encodeURIComponent(condition)}`)
-        })
+          queryParams.push(`condition=${encodeURIComponent(condition)}`);
+        });
       }
-      const queryString = queryParams.join("&")
-      router.push(`/car-for-sale?${queryString}`)
-      closeSidebar() // Use context function
+      const queryString = queryParams.join("&");
+      router.push(`/car-for-sale?${queryString}`);
+      closeSidebar(); // Use context function
     } catch (error) {
-      console.error("Error searching cars:", error)
-      alert("An error occurred. Please try again.")
+      console.error("Error searching cars:", error);
+      alert("An error occurred. Please try again.");
     } finally {
-      setSearchLoading(false)
+      setSearchLoading(false);
     }
-  }
+  };
 
   const formatPrice = (price) => {
     if (price >= 1000) {
-      return `$${(price / 1000).toFixed(0)}k`
+      return `$${(price / 1000).toFixed(0)}k`;
     }
-    return `$${price.toLocaleString()}`
-  }
+    return `$${price.toLocaleString()}`;
+  };
+
+  const getColorClass = (colorId) => {
+    const colorClasses = {
+      black: "bg-black",
+      blue: "bg-blue-500",
+      gray: "bg-gray-500",
+      white: "bg-white",
+      silver: "bg-gray-400",
+      red: "bg-red-500",
+      green: "bg-green-500",
+    };
+    return colorClasses[colorId] || "bg-gray-400";
+  };
 
   return (
     <>
+      <style jsx>{`
+        .price-range-track {
+          position: absolute;
+          height: 0.5rem;
+          background: linear-gradient(to right, #22c55e, #16a34a);
+          border-radius: 0.25rem;
+          left: ${priceRangeStyles.left};
+          width: ${priceRangeStyles.width};
+        }
+        
+        .color-button-black { background-color: #000000; }
+        .color-button-blue { background-color: #3b82f6; }
+        .color-button-gray { background-color: #6b7280; }
+        .color-button-white { background-color: #ffffff; }
+        .color-button-silver { background-color: #c0c0c0; }
+        .color-button-red { background-color: #ef4444; }
+        .color-button-green { background-color: #22c55e; }
+        
+        .color-button-selected {
+          border: 2px solid white;
+          box-shadow: 0 0 0 2px rgb(139 92 246);
+        }
+        
+        .color-button-unselected {
+          border: 1px solid rgb(209 213 219);
+        }
+        
+        @media (prefers-color-scheme: dark) {
+          .color-button-unselected {
+            border: 1px solid rgb(75 85 99);
+          }
+        }
+      `}</style>
       {/* Sidebar Overlay */}
       {isSidebarOpen && (
         <div
@@ -165,7 +221,9 @@ const CarSearchSidebar = () => {
         <div className="flex h-full flex-col">
           {/* Sidebar Header - Minimal */}
           <div className="flex items-center justify-between border-b border-gray-200 p-3 dark:border-gray-700">
-            <h2 className="text-lg font-semibold text-[#182641] dark:text-white">Search Filters</h2>
+            <h2 className="text-lg font-semibold text-[#182641] dark:text-white">
+              Search Filters
+            </h2>
             <button
               onClick={closeSidebar}
               aria-label="Close Sidebar"
@@ -179,7 +237,10 @@ const CarSearchSidebar = () => {
             {/* Make and Model Selection */}
             <div className="grid grid-cols-2 gap-3">
               <div>
-                <label htmlFor={`${idPrefix}-make`} className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300">
+                <label
+                  htmlFor={`${idPrefix}-make`}
+                  className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300"
+                >
                   Make
                 </label>
                 <div className="relative">
@@ -206,7 +267,10 @@ const CarSearchSidebar = () => {
                 </div>
               </div>
               <div>
-                <label htmlFor={`${idPrefix}-model`} className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300">
+                <label
+                  htmlFor={`${idPrefix}-model`}
+                  className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300"
+                >
                   Model
                 </label>
                 <div className="relative">
@@ -240,7 +304,10 @@ const CarSearchSidebar = () => {
                   <span>{t("priceRange")}</span>
                 </span>
               </div>
-              <div id="priceRangeOne" className="rounded-xl border-2 border-gray-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm dark:border-gray-600 dark:bg-gray-800/60">
+              <div
+                id="priceRangeOne"
+                className="rounded-xl border-2 border-gray-200 bg-white/60 p-4 shadow-sm backdrop-blur-sm dark:border-gray-600 dark:bg-gray-800/60"
+              >
                 <div className="mb-2 flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <div className="rounded-lg bg-[#DC3C22]/10 px-3 py-1 dark:bg-[#DC3C22]/20">
@@ -266,8 +333,8 @@ const CarSearchSidebar = () => {
                     value={minPrice}
                     aria-label="Minimum price range"
                     onChange={(e) => {
-                      const value = Number.parseInt(e.target.value)
-                      if (value < maxPrice) setMinPrice(value)
+                      const value = Number.parseInt(e.target.value);
+                      if (value < maxPrice) setMinPrice(value);
                     }}
                     className="absolute h-2 w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-600 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200 [&::-webkit-slider-thumb]:hover:scale-110"
                   />
@@ -280,24 +347,23 @@ const CarSearchSidebar = () => {
                     value={maxPrice}
                     aria-label="Maximum price range"
                     onChange={(e) => {
-                      const value = Number.parseInt(e.target.value)
-                      if (value > minPrice) setMaxPrice(value)
+                      const value = Number.parseInt(e.target.value);
+                      if (value > minPrice) setMaxPrice(value);
                     }}
                     className="absolute h-2 w-full appearance-none bg-transparent [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-red-600 [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:transition-all [&::-webkit-slider-thumb]:duration-200 [&::-webkit-slider-thumb]:hover:scale-110"
                   />
                   <div className="relative h-2 rounded-full bg-gray-200 dark:bg-gray-700">
-                    <div
-                      className="absolute h-2 rounded-full bg-gradient-to-r from-red-600 to-red-700 shadow-sm"
-                      style={{
-                        left: `${((minPrice - 100) / 99900) * 100}%`,
-                        width: `${((maxPrice - minPrice) / 99900) * 100}%`,
-                      }}
-                    ></div>
+                    <div className="price-range-track"></div>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor={`${idPrefix}-minPriceInput`} className="mb-1 block text-xs font-medium text-[#182641]/70 dark:text-gray-400">Minimum</label>
+                    <label
+                      htmlFor={`${idPrefix}-minPriceInput`}
+                      className="mb-1 block text-xs font-medium text-[#182641]/70 dark:text-gray-400"
+                    >
+                      Minimum
+                    </label>
                     <input
                       id={`${idPrefix}-minPriceInput`}
                       type="number"
@@ -306,14 +372,20 @@ const CarSearchSidebar = () => {
                       value={minPrice}
                       aria-label="Minimum price range"
                       onChange={(e) => {
-                        const value = Number.parseInt(e.target.value) || 100
-                        if (value < maxPrice && value >= 100) setMinPrice(value)
+                        const value = Number.parseInt(e.target.value) || 100;
+                        if (value < maxPrice && value >= 100)
+                          setMinPrice(value);
                       }}
                       className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#182641] transition-colors duration-200 focus:border-[#DC3C22] focus:ring-2 focus:ring-[#DC3C22]/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-[#DC3C22] dark:focus:ring-[#DC3C22]/30"
                     />
                   </div>
                   <div>
-                    <label htmlFor={`${idPrefix}-maxPriceInput`} className="mb-1 block text-xs font-medium text-[#182641]/70 dark:text-gray-400">Maximum</label>
+                    <label
+                      htmlFor={`${idPrefix}-maxPriceInput`}
+                      className="mb-1 block text-xs font-medium text-[#182641]/70 dark:text-gray-400"
+                    >
+                      Maximum
+                    </label>
                     <input
                       id={`${idPrefix}-maxPriceInput`}
                       type="number"
@@ -322,8 +394,9 @@ const CarSearchSidebar = () => {
                       value={maxPrice}
                       aria-label="Maximum price range"
                       onChange={(e) => {
-                        const value = Number.parseInt(e.target.value) || 100000
-                        if (value > minPrice && value <= 100000) setMaxPrice(value)
+                        const value = Number.parseInt(e.target.value) || 100000;
+                        if (value > minPrice && value <= 100000)
+                          setMaxPrice(value);
                       }}
                       className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-[#182641] transition-colors duration-200 focus:border-[#DC3C22] focus:ring-2 focus:ring-[#DC3C22]/20 dark:border-gray-600 dark:bg-gray-800 dark:text-white dark:focus:border-[#DC3C22] dark:focus:ring-[#DC3C22]/30"
                     />
@@ -333,21 +406,28 @@ const CarSearchSidebar = () => {
             </div>
             {/* Color Selection - Compact */}
             <div>
-              <div className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300">Colors</div>
-              <div className="flex flex-wrap gap-2" role="group" aria-label="Color selection">
+              <div className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300">
+                Colors
+              </div>
+              <div
+                className="flex flex-wrap gap-2"
+                role="group"
+                aria-label="Color selection"
+              >
                 {Object.entries(colorMap).map(([id, hex]) => {
-                  const label = id.charAt(0).toUpperCase() + id.slice(1)
-                  const isSelected = selectedColors.includes(id)
+                  const label = id.charAt(0).toUpperCase() + id.slice(1);
+                  const isSelected = selectedColors.includes(id);
                   return (
                     <button
                       key={id}
-                      className={`relative h-6 w-6 rounded-full border ${
-                        isSelected ? "border-white ring-2 ring-red-600" : "border-gray-300 dark:border-gray-600"
+                      className={`relative h-6 w-6 rounded-full border ${getColorClass(id)} ${
+                        isSelected
+                          ? "border-white ring-2 ring-red-600"
+                          : "border-gray-300 dark:border-gray-600"
                       } transition-all duration-200`}
-                      style={{ backgroundColor: hex }}
                       onClick={() => handleColorSelection(id)}
                       title={label}
-                      aria-label={`${label} color ${isSelected ? 'selected' : ''}`}
+                      aria-label={`${label} color ${isSelected ? "selected" : ""}`}
                     >
                       {isSelected && (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -365,14 +445,20 @@ const CarSearchSidebar = () => {
                         </div>
                       )}
                     </button>
-                  )
+                  );
                 })}
               </div>
             </div>
             {/* Condition Selection - Compact */}
             <div>
-              <div className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300">Condition</div>
-              <div className="flex gap-2" role="group" aria-label="Condition selection">
+              <div className="mb-2 block text-sm font-semibold text-[#182641] dark:text-gray-300">
+                Condition
+              </div>
+              <div
+                className="flex gap-2"
+                role="group"
+                aria-label="Condition selection"
+              >
                 <ConditionButton
                   condition="new"
                   selected={selectedConditions.includes("new")}
@@ -389,7 +475,7 @@ const CarSearchSidebar = () => {
             <button
               onClick={handleSearch}
               disabled={searchLoading}
-              className="w-full rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:shadow-lg hover:from-red-700 hover:to-red-600 focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-70"
+              className="w-full rounded-lg bg-gradient-to-r from-red-600 to-red-700 px-4 py-3 font-medium text-white shadow-md transition-all duration-300 hover:from-red-700 hover:to-red-600 hover:shadow-lg focus:outline-none focus:ring-0 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <div className="flex items-center justify-center">
                 {searchLoading ? (
@@ -409,7 +495,7 @@ const CarSearchSidebar = () => {
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default CarSearchSidebar
+export default CarSearchSidebar;

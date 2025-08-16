@@ -314,10 +314,6 @@ const HeroSection = () => {
     </div>
   ), []);
 
-  const handleImageError = useCallback((e) => {
-    e.target.src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='1920' height='1080' viewBox='0 0 1920 1080'%3E%3Cdefs%3E%3ClinearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'%3E%3Cstop offset='0%25' style='stop-color:%23111827;stop-opacity:1' /%3E%3Cstop offset='100%25' style='stop-color:%23374151;stop-opacity:1' /%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1920' height='1080' fill='url(%23grad)'/%3E%3Ctext x='960' y='540' font-family='Arial' font-size='48' fill='%23ffffff' text-anchor='middle' dy='.3em'%3EPremium Automotive Platform%3C/text%3E%3C/svg%3E";
-  }, []);
-
   return (
     <section className="relative min-h-screen w-full overflow-hidden">
       <div className="absolute inset-0 z-0">
@@ -329,7 +325,6 @@ const HeroSection = () => {
           priority
           sizes="100vw"
           quality={90}
-          onError={handleImageError}
         />
         
         <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-black/70"></div>

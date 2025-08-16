@@ -696,45 +696,6 @@ const Page = () => {
                           <option value="active">Active</option>
                         </Select>
                       </div>
-                      <div className="mt-6">
-                        <Label className="block mb-2 font-medium text-slate-700">Preview</Label>
-                        <div className="p-4 border border-slate-200 rounded-lg bg-slate-50">
-                          <div
-                            className="p-4 rounded-lg shadow-sm"
-                            style={{
-                              backgroundColor: settings.cookieConsent.bgColor,
-                              color: settings.cookieConsent.textColor,
-                            }}
-                          >
-                            <div className="font-medium mb-2">
-                              {settings.cookieConsent.message || 'We use cookies to enhance your experience'}
-                            </div>
-                            <div className="text-sm mb-4 opacity-80">
-                              We use essential cookies to make our site work. With your consent, we may also use non-essential cookies to improve user experience.
-                            </div>
-                            <div className="flex flex-wrap gap-3">
-                              <button
-                                className="px-4 py-2 text-sm rounded transition-colors"
-                                style={{
-                                  backgroundColor: settings.cookieConsent.buttonBgColor,
-                                  color: settings.cookieConsent.buttonTextColor,
-                                }}
-                              >
-                                Reject All
-                              </button>
-                              <button
-                                className="px-4 py-2 text-sm rounded font-medium transition-colors"
-                                style={{
-                                  backgroundColor: settings.cookieConsent.buttonBgColor,
-                                  color: settings.cookieConsent.buttonTextColor,
-                                }}
-                              >
-                                {settings.cookieConsent.buttonText || 'Accept All'}
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
                     </div>
                   </div>
                 )}

@@ -1,4 +1,4 @@
-// "use client";
+// // "use client";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import {
@@ -131,10 +131,7 @@ const BrandsList = () => {
                   key={`${brand.name}-${index}`}
                   className="group"
                 >
-                  <div
-                    className="animate-fade-in-up relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl border border-gray-300 hover:border-app-button dark:border-gray-600 dark:hover:border-app-button bg-white dark:bg-gray-800 p-2 sm:p-3 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-xl"
-                    style={{ animationDelay: `${index * 0.05}s` }}
-                  >
+                  <div className="brand-card animate-fade-in-up relative flex flex-col items-center justify-center rounded-lg sm:rounded-xl border border-gray-300 hover:border-app-button dark:border-gray-600 dark:hover:border-app-button bg-white dark:bg-gray-800 p-2 sm:p-3 shadow-md transition-all duration-300 hover:-translate-y-1 hover:shadow-lg dark:hover:shadow-xl">
                     <div className="relative h-8 w-8 xs:h-10 xs:w-10 sm:h-12 sm:w-12 lg:h-14 lg:w-14 overflow-hidden rounded-md sm:rounded-lg bg-gray-100 dark:bg-gray-700 p-1.5 sm:p-2 lg:p-3 shadow-sm transition-all duration-500 group-hover:scale-110 group-hover:shadow-md">
                       <Icon className="h-full w-full text-app-button dark:text-app-button transition-all duration-300" />
                     </div>

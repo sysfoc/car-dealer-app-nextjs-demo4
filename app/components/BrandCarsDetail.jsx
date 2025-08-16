@@ -23,14 +23,14 @@ const BrandCarsDetail = () => {
         return (
           <div className="shadow-md" key={index}>
             <div>
-              <Image
-                src={`${vehical.image}`}
-                alt={`${vehical.name}`}
-                width={500}
-                height={300}
-                style={{ objectPosition: 'center' }}
-                className="size-full"
-              />
+            <Image
+  src={`${vehical.image}`}
+  alt={`${vehical.name}`}
+  width={500}
+  height={300}
+  className="size-full image-style-vp59n"
+/>
+
             </div>
             <div className="p-4">
               <div>
@@ -62,10 +62,8 @@ const BrandCarsDetail = () => {
                   <p className="mt-2 text-sm">{vehical.transmission}</p>
                 </div>
               </div>
-              <div
-                className="mt-2 border-gray-300"
-                style={{ borderWidth: "1px" }}
-              ></div>
+              <div className="mt-2 border-gray-300 div-style-kd84m"></div>
+
               <div className="mt-2">
                 <p>New From ${vehical.startingPrice}</p>
               </div>

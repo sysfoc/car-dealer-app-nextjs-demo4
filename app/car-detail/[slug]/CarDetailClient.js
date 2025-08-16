@@ -353,13 +353,14 @@ export default function Home() {
                 ) : dealer ? (
                   dealer.map ? (
                     <iframe
-                      src={dealer.map}
-                      width="600"
-                      height="450"
-                      style={{ border: 0, width: "100%" }}
-                      loading="lazy"
-                      title="Dealer Location Map"
-                    ></iframe>
+  src={dealer.map}
+  width="600"
+  height="450"
+  className="iframe-style-mp47x"
+  loading="lazy"
+  title="Dealer Location Map"
+></iframe>
+
                   ) : (
                     <p className="text-gray-600 dark:text-gray-400">
                       Map is not available
