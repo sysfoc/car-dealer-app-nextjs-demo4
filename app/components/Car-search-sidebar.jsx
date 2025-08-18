@@ -171,6 +171,11 @@ const CarSearchSidebar = () => {
     return colorClasses[colorId] || "bg-gray-400";
   };
 
+  const priceRangeStyles = {
+    left: `${((minPrice - 100) / 99900) * 100}%`,
+    width: `${((maxPrice - minPrice) / 99900) * 100}%`,
+  };
+
   return (
     <>
       <style jsx>{`

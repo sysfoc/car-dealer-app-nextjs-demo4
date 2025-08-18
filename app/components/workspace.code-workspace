@@ -1,0 +1,11 @@
+{
+	"folders": [],
+	"settings": {
+		"tailwindCSS.classAttributes": [
+			"class",
+			"className",
+			"theme"
+		],
+		"typescript.tsdk": "node_modules/typescript/lib"
+	}
+}
