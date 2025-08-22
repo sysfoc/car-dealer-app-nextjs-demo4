@@ -49,14 +49,20 @@ const Banner = () => {
           <div className="flex min-w-0 flex-shrink-0 items-center gap-2 sm:gap-4">
             {/* Brand */}
             <div className="flex-shrink-0">
-              <h1 className="xs:text-sm text-xs font-bold tracking-wide text-white sm:text-base md:text-lg xl:text-2xl">
+              {/* <h1 className="xs:text-sm text-xs font-bold tracking-wide text-white sm:text-base md:text-lg xl:text-2xl">
                 <span className="block text-center sm:hidden">
                     Automotiveweb
                   <br />
                   Solutions
                 </span>
                 <span className="hidden sm:block">AutomotiveWebSolutions</span>
-              </h1>
+              </h1> */}
+              <h1 className="xs:text-sm text-xs font-bold tracking-wide text-white sm:text-base md:text-lg xl:text-2xl leading-tight text-center sm:text-left">
+  Automotive
+  <br />
+  WebSolutions
+</h1>
+
             </div>
 
             {/* Website Selector */}
