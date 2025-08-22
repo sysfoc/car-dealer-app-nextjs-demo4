@@ -57,7 +57,7 @@ const Banner = () => {
                 </span>
                 <span className="hidden sm:block">AutomotiveWebSolutions</span>
               </h1> */}
-              <h1 className="xs:text-sm text-xs font-bold tracking-wide text-white sm:text-base md:text-lg xl:text-2xl leading-tight text-center sm:text-left">
+              <h1 className="xs:text-sm text-xs font-bold tracking-wide text-white sm:text-base md:text-lg xl:text-2xl leading-none text-center sm:text-left">
   Automotive
   <br />
   WebSolutions
