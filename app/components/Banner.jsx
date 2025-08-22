@@ -10,10 +10,10 @@ const Banner = () => {
 
   const websiteOptions = [
     {
-          value: "auto",
-          label: "Automotive Solutions",
-          url: "https://automotivewebsolutions.com",
-        },
+      value: "auto",
+      label: "Automotive Solutions",
+      url: "https://automotivewebsolutions.com",
+    },
     {
       value: "cruise",
       label: "Cruise Control",
@@ -57,12 +57,11 @@ const Banner = () => {
                 </span>
                 <span className="hidden sm:block">AutomotiveWebSolutions</span>
               </h1> */}
-              <h1 className="xs:text-sm text-xs font-bold tracking-wide text-white sm:text-base md:text-lg xl:text-2xl leading-none text-center sm:text-left">
-  Automotive
-  <br />
-  WebSolutions
-</h1>
-
+              <h1 className="xs:text-sm text-center text-xs font-bold leading-none tracking-wide text-white sm:text-left sm:text-base md:text-lg xl:text-2xl">
+                Automotive
+                <br />
+                WebSolutions
+              </h1>
             </div>
 
             {/* Website Selector */}
